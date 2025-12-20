@@ -1,0 +1,49 @@
+/* 复古主题 - 基础样式 */
+.root {
+    -fx-background-color: #F5DEB3;
+    -fx-text-fill: #8B4513;
+}
+
+/* 播放容器 */
+.media-container {
+    -fx-background-color: #FFE4B5;
+    -fx-border-color: #CD853F;
+    -fx-border-width: 2px;
+}
+
+/* 按钮样式 */
+.button {
+    -fx-background-color: #A52A2A;
+    -fx-text-fill: white;
+    -fx-border-radius: 0;
+    -fx-cursor: hand;
+}
+.button:hover {
+    -fx-background-color: #CD5C5C;
+}
+
+/* 进度条轨道 */
+.slider .track {
+    -fx-background-color: #DEB887;
+    -fx-height: 8px;
+}
+/* 进度条滑块 */
+.slider .thumb {
+    -fx-background-color: #A52A2A;
+    -fx-size: 16px;
+    -fx-border-radius: 0;
+}
+
+/* 时长标签 */
+.time-label {
+    -fx-text-fill: #8B4513;
+    -fx-font-family: "SimSun";
+    -fx-font-size: 12px;
+}
+
+/* 文件名标签 */
+.file-name-label {
+    -fx-text-fill: #8B0000;
+    -fx-font-family: "SimSun";
+    -fx-font-weight: bold;
+}

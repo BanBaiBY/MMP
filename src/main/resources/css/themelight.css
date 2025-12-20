@@ -1,0 +1,47 @@
+/* 浅色主题 - 基础样式 */
+.root {
+    -fx-background-color: #f5f5f5;
+    -fx-text-fill: #333333;
+}
+
+/* 播放容器 */
+.media-container {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+}
+
+/* 按钮样式 */
+.button {
+    -fx-background-color: #1E90FF;
+    -fx-text-fill: white;
+    -fx-border-radius: 4px;
+    -fx-cursor: hand;
+}
+.button:hover {
+    -fx-background-color: #4169E1;
+}
+
+/* 进度条轨道 */
+.slider .track {
+    -fx-background-color: #e0e0e0;
+    -fx-height: 6px;
+}
+/* 进度条滑块 */
+.slider .thumb {
+    -fx-background-color: #1E90FF;
+    -fx-size: 14px;
+    -fx-border-radius: 7px;
+}
+
+/* 时长标签 */
+.time-label {
+    -fx-text-fill: #333333;
+    -fx-font-size: 12px;
+}
+
+/* 文件名标签 */
+.file-name-label {
+    -fx-text-fill: #1E90FF;
+    -fx-font-weight: bold;
+}
