@@ -143,14 +143,57 @@
                        minHeight="40.0">
                 <padding><Insets top="5.0" right="20.0" bottom="5.0" left="20.0"/></padding>
 
-                <Button fx:id="playPauseBtn"
-                        prefWidth="50.0" prefHeight="50.0"
+                <!-- 新增：快进/后退+播放暂停按钮容器 -->
+                <HBox fx:id="playControlBox"
+                      spacing="8.0"
+                      alignment="CENTER"
+                      StackPane.alignment="CENTER"
+                      layoutX="-40.0">
+                    <!-- 后退30秒按钮 -->
+                    <Button fx:id="rewindBtn"
+                            prefWidth="40.0" prefHeight="30.0"
+                            alignment="CENTER"
+                            style="-fx-background-color: #363636;
+                               -fx-border-width: 0;
+                               -fx-cursor: hand;
+                               -fx-padding: 0;
+                               -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+
+                    <!-- 播放/暂停按钮 -->
+                    <Button fx:id="playPauseBtn"
+                            prefWidth="50.0" prefHeight="30.0"
+                            alignment="CENTER"
+                            style="-fx-background-color: #363636;
+                               -fx-border-width: 0;
+                               -fx-cursor: hand;
+                               -fx-padding: 0;
+                               -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+
+                    <!-- 快进30秒按钮 -->
+                    <Button fx:id="forwardBtn"
+                            prefWidth="40.0" prefHeight="30.0"
+                            alignment="CENTER"
+                            style="-fx-background-color: #363636;
+                               -fx-border-width: 0;
+                               -fx-cursor: hand;
+                               -fx-padding: 0;
+                               -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+                </HBox>
+
+                <!-- 倍速按钮 -->
+                <Button fx:id="speedBtn"
+                        prefWidth="60.0" prefHeight="30.0"
                         alignment="CENTER"
-                        StackPane.alignment="CENTER"
+                        StackPane.alignment="CENTER_LEFT"
+                        layoutX="80.0"
                         style="-fx-background-color: #363636;
-                           -fx-border-width: 0;
+                           -fx-text-fill: #ffffff;
+                           -fx-font-family: 'Microsoft YaHei';
+                           -fx-font-size: 13px;
+                           -fx-background-radius: 6px;
                            -fx-cursor: hand;
-                           -fx-padding: 0;
+                           -fx-padding: 0 10px;
+                           -fx-border-width: 0;
                            -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
                 <HBox alignment="CENTER_RIGHT"
