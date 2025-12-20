@@ -1,0 +1,16 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="MultyMediaPlayer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/MultyMediaPlayer_jar</output-path>
+    <root id="archive" name="MultyMediaPlayer.jar">
+      <element id="module-output" name="MultyMediaPlayer" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/javafx-sdk-17.0.17/lib/javafx-swt.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/javafx-sdk-17.0.17/lib/javafx.web.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/javafx-sdk-17.0.17/lib/javafx.base.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/javafx-sdk-17.0.17/lib/javafx.fxml.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/javafx-sdk-17.0.17/lib/javafx.media.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/javafx-sdk-17.0.17/lib/javafx.swing.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/javafx-sdk-17.0.17/lib/javafx.controls.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/javafx-sdk-17.0.17/lib/javafx.graphics.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

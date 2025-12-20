@@ -1,0 +1,47 @@
+/* 进度条轨道基础样式 */
+#progressSlider .track {
+    -fx-background-color: #444444;
+    -fx-background-radius: 0;
+    -fx-padding: 4px; /* 轨道高度，需和滑块高度匹配 */
+}
+
+/* 滑块样式 */
+#progressSlider .thumb {
+    -fx-background-color: white;
+    -fx-background-radius: 0;
+    -fx-pref-width: 8px;
+    -fx-pref-height: 16px;
+    -fx-border-color: #333333;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, #000000, 1, 0, 0, 0);
+}
+
+/* 滑块悬浮样式 */
+#progressSlider .thumb:hover {
+    -fx-background-color: #1E90FF;
+    -fx-cursor: hand;
+}
+
+/* 音量滑块样式 */
+#volumeSlider .track {
+    -fx-background-color: #444444;
+    -fx-background-radius: 2px;
+    -fx-padding: 2px;
+}
+#volumeSlider .thumb {
+    -fx-background-color: white;
+    -fx-background-radius: 50%;
+    -fx-pref-width: 12px;
+    -fx-pref-height: 12px;
+}
+#volumeSlider .thumb:hover {
+    -fx-background-color: #1E90FF;
+}
+
+/* 按钮悬浮样式 */
+#playPauseBtn:hover {
+    -fx-background-color: #464646;
+}
+#openBtn:hover {
+    -fx-background-color: #414141;
+}
