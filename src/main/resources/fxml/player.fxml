@@ -60,6 +60,21 @@
                           -fx-padding: 0 10px;
                           -fx-text-overrun: ellipsis;"
                        HBox.hgrow="ALWAYS"/>
+
+                <!-- 新增：右上角设置按钮 -->
+                <Button fx:id="settingsBtn"
+                        text="⚙️ 设置"
+                        prefWidth="80.0"
+                        prefHeight="30.0"
+                        style="-fx-background-color: #363636;
+                           -fx-text-fill: #ffffff;
+                           -fx-font-family: 'Microsoft YaHei';
+                           -fx-font-size: 13px;
+                           -fx-background-radius: 6px;
+                           -fx-cursor: hand;
+                           -fx-padding: 0 10px;
+                           -fx-border-width: 0;
+                           -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
             </children>
         </HBox>
     </top>
