@@ -1,47 +1,66 @@
-/* 浅色主题 - 基础样式 */
+/* 浅色主题 - 适配现有UI风格 */
 .root {
     -fx-background-color: #f5f5f5;
-    -fx-text-fill: #333333;
 }
 
-/* 播放容器 */
-.media-container {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #e0e0e0;
-    -fx-border-width: 1px;
+/* 顶部导航栏 */
+#topNavi {
+    -fx-background-color: linear-gradient(to right, #e0e0e0, #f0f0f0) !important;
+    -fx-border-color: #cccccc !important;
+}
+
+/* 底部导航栏 */
+#bottomNavi {
+    -fx-background-color: linear-gradient(to bottom, #f0f0f0, #e0e0e0) !important;
+    -fx-border-color: #dddddd !important;
 }
 
 /* 按钮样式 */
 .button {
-    -fx-background-color: #1E90FF;
-    -fx-text-fill: white;
-    -fx-border-radius: 4px;
-    -fx-cursor: hand;
+    -fx-background-color: #1E90FF !important;
+    -fx-text-fill: white !important;
 }
 .button:hover {
-    -fx-background-color: #4169E1;
+    -fx-background-color: #4169E1 !important;
+}
+
+/* 主题下拉框 */
+.combo-box {
+    -fx-background-color: #e0e0e0 !important;
+    -fx-text-fill: #333333 !important;
+}
+.combo-box .list-cell {
+    -fx-background-color: #f5f5f5;
+    -fx-text-fill: #333333;
+}
+.combo-box .list-cell:hover {
+    -fx-background-color: #1E90FF;
+    -fx-text-fill: white;
+}
+
+/* 标签文字 */
+.label {
+    -fx-text-fill: #333333 !important;
+}
+#fileNameLabel {
+    -fx-text-fill: #1E90FF !important;
+}
+
+/* 时长文字 */
+.text {
+    -fx-fill: #333333 !important;
 }
 
 /* 进度条轨道 */
 .slider .track {
     -fx-background-color: #e0e0e0;
-    -fx-height: 6px;
 }
 /* 进度条滑块 */
 .slider .thumb {
     -fx-background-color: #1E90FF;
-    -fx-size: 14px;
-    -fx-border-radius: 7px;
 }
 
-/* 时长标签 */
-.time-label {
-    -fx-text-fill: #333333;
-    -fx-font-size: 12px;
-}
-
-/* 文件名标签 */
-.file-name-label {
-    -fx-text-fill: #1E90FF;
-    -fx-font-weight: bold;
+/* 播放容器 */
+#mediaContainer {
+    -fx-background-color: #ffffff !important;
 }

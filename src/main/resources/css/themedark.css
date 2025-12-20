@@ -1,47 +1,68 @@
-/* 深色主题 - 基础样式 */
+/* 深色主题 - 强化现有深色风格 */
 .root {
-    -fx-background-color: #202020;
-    -fx-text-fill: #f0f0f0;
+    -fx-background-color: #000000;
 }
 
-/* 播放容器 */
-.media-container {
-    -fx-background-color: #181818;
-    -fx-border-color: #333333;
-    -fx-border-width: 1px;
+/* 顶部导航栏 */
+#topNavi {
+    -fx-background-color: linear-gradient(to right, #222222, #333333) !important;
+    -fx-border-color: #111111 !important;
+}
+
+/* 底部导航栏 */
+#bottomNavi {
+    -fx-background-color: linear-gradient(to bottom, #333333, #222222) !important;
+    -fx-border-color: #444444 !important;
 }
 
 /* 按钮样式 */
 .button {
-    -fx-background-color: #FF6347;
-    -fx-text-fill: white;
-    -fx-border-radius: 4px;
-    -fx-cursor: hand;
+    -fx-background-color: #FF6347 !important;
+    -fx-text-fill: white !important;
 }
 .button:hover {
-    -fx-background-color: #FF4500;
+    -fx-background-color: #FF4500 !important;
+}
+
+/* ComboBox下拉列表容器 */
+.combo-box-popup .list-view {
+    -fx-background-color: #444444 !important;
+}
+/* 下拉列表项 */
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #444444 !important;
+    -fx-text-fill: #ffffff !important;
+}
+/* 下拉列表项 hover/选中状态 */
+.combo-box-popup .list-view .list-cell:hover:filled:selected {
+    -fx-background-color: #FF6347 !important; /* 深色主题主色 */
+    -fx-text-fill: #ffffff !important;
+}
+/* 标签文字 */
+.label {
+    -fx-text-fill: #cccccc !important;
+}
+#fileNameLabel {
+    -fx-text-fill: #FF6347 !important;
+}
+
+/* 时长文字 */
+.text {
+    -fx-fill: #ffffff !important;
 }
 
 /* 进度条轨道 */
 .slider .track {
     -fx-background-color: #444444;
-    -fx-height: 6px;
 }
 /* 进度条滑块 */
 .slider .thumb {
     -fx-background-color: #FF6347;
-    -fx-size: 14px;
-    -fx-border-radius: 7px;
 }
-
-/* 时长标签 */
-.time-label {
-    -fx-text-fill: #f0f0f0;
-    -fx-font-size: 12px;
+.root {
+    -fx-text-background-color: #ffffff; /* 深色主题下文本背景色设为白色，适配文本填充 */
 }
-
-/* 文件名标签 */
-.file-name-label {
-    -fx-text-fill: #FF6347;
-    -fx-font-weight: bold;
+/* 播放容器 */
+#mediaContainer {
+    -fx-background-color: #000000 !important;
 }

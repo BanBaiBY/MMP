@@ -1,49 +1,66 @@
-/* 复古主题 - 基础样式 */
+/* 复古主题 - 暖色调适配 */
 .root {
     -fx-background-color: #F5DEB3;
-    -fx-text-fill: #8B4513;
 }
 
-/* 播放容器 */
-.media-container {
-    -fx-background-color: #FFE4B5;
-    -fx-border-color: #CD853F;
-    -fx-border-width: 2px;
+/* 顶部导航栏 */
+#topNavi {
+    -fx-background-color: linear-gradient(to right, #DEB887, #FFE4B5) !important;
+    -fx-border-color: #CD853F !important;
+}
+
+/* 底部导航栏 */
+#bottomNavi {
+    -fx-background-color: linear-gradient(to bottom, #FFE4B5, #DEB887) !important;
+    -fx-border-color: #CD853F !important;
 }
 
 /* 按钮样式 */
 .button {
-    -fx-background-color: #A52A2A;
-    -fx-text-fill: white;
-    -fx-border-radius: 0;
-    -fx-cursor: hand;
+    -fx-background-color: #A52A2A !important;
+    -fx-text-fill: white !important;
 }
 .button:hover {
-    -fx-background-color: #CD5C5C;
+    -fx-background-color: #CD5C5C !important;
+}
+
+/* 主题下拉框 */
+.combo-box {
+    -fx-background-color: #FFE4B5 !important;
+    -fx-text-fill: #8B4513 !important;
+}
+.combo-box .list-cell {
+    -fx-background-color: #F5DEB3;
+    -fx-text-fill: #8B4513;
+}
+.combo-box .list-cell:hover {
+    -fx-background-color: #A52A2A;
+    -fx-text-fill: white;
+}
+
+/* 标签文字 */
+.label {
+    -fx-text-fill: #8B4513 !important;
+}
+#fileNameLabel {
+    -fx-text-fill: #8B0000 !important;
+}
+
+/* 时长文字 */
+.text {
+    -fx-fill: #8B4513 !important;
 }
 
 /* 进度条轨道 */
 .slider .track {
     -fx-background-color: #DEB887;
-    -fx-height: 8px;
 }
 /* 进度条滑块 */
 .slider .thumb {
     -fx-background-color: #A52A2A;
-    -fx-size: 16px;
-    -fx-border-radius: 0;
 }
 
-/* 时长标签 */
-.time-label {
-    -fx-text-fill: #8B4513;
-    -fx-font-family: "SimSun";
-    -fx-font-size: 12px;
-}
-
-/* 文件名标签 */
-.file-name-label {
-    -fx-text-fill: #8B0000;
-    -fx-font-family: "SimSun";
-    -fx-font-weight: bold;
+/* 播放容器 */
+#mediaContainer {
+    -fx-background-color: #FFE4B5 !important;
 }

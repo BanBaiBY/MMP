@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -25,12 +26,12 @@ import javafx.util.Duration;
 import java.io.File;
 import java.net.URL;
 
-
 public class PlayerController {
     // 布局控件
     @FXML private BorderPane rootPane;
     @FXML private StackPane mediaContainer;
     @FXML private Label fileNameLabel; // 文件名显示标签
+    @FXML private ComboBox<String> themeComboBox; // 新增主题下拉框
 
     // 媒体控件
     @FXML private MediaView mediaView;
@@ -57,6 +58,8 @@ public class PlayerController {
     // 内置矢量图标
     private final Polygon playIcon;  // 播放三角形
     private final HBox pauseIcon;    // 暂停双矩形
+    // 主题管理器
+    private final ThemeManager themeManager = ThemeManager.getInstance();
 
     public PlayerController() {
         // 播放三角形
@@ -81,10 +84,10 @@ public class PlayerController {
         pauseIcon.setPrefSize(24, 24);
     }
 
-
     @FXML
     public void initialize() {
         initCSS();
+        initThemeComboBox(); // 初始化主题下拉框
         fileNameLabel.setText("未选择文件");
 
         playPauseBtn.setGraphic(playIcon);
@@ -123,14 +126,33 @@ public class PlayerController {
         updateTimeDisplay(Duration.ZERO, Duration.ZERO);
     }
 
+    // 初始化主题下拉框
+    private void initThemeComboBox() {
+        // 添加所有主题选项
+        themeComboBox.getItems().addAll(themeManager.getThemeDisplayNames());
+        // 默认选中当前主题
+        themeComboBox.setValue(themeManager.getCurrentTheme().getDisplayName());
+        // 绑定主题切换事件
+        themeComboBox.setOnAction(e -> {
+            String selectedName = themeComboBox.getValue();
+            ThemeManager.Theme selectedTheme = themeManager.getThemeByDisplayName(selectedName);
+            themeManager.switchTheme(selectedTheme, rootPane.getScene());
+            // 重新更新进度条样式（适配新主题）
+            updateProgressSliderStyle(progressSlider.getValue());
+        });
+    }
+
     private void initCSS() {
-        URL cssUrl = getClass().getClassLoader().getResource("css/player.css");
-        if (cssUrl != null) {
-            rootPane.getStylesheets().clear();
-            rootPane.getStylesheets().add(cssUrl.toExternalForm());
+        // 加载基础样式
+        URL baseCssUrl = getClass().getClassLoader().getResource("css/player.css");
+        if (baseCssUrl != null) {
+            rootPane.getStylesheets().add(baseCssUrl.toExternalForm());
         } else {
             System.err.println("CSS文件 /css/player.css 未找到！");
         }
+
+        // 加载默认主题样式
+        themeManager.switchTheme(ThemeManager.Theme.LIGHT, rootPane.getScene());
     }
 
     private void initMediaContainerClick() {
@@ -223,7 +245,7 @@ public class PlayerController {
         return String.format("%02d:%02d", minutes, seconds);
     }
 
-    // 更新进度条渐变样式
+    // 更新进度条渐变样式（适配主题）
     private void updateProgressSliderStyle(double progress) {
         // progress范围：0.0 ~ 1.0
         Platform.runLater(() -> {
@@ -231,16 +253,42 @@ public class PlayerController {
             Node track = progressSlider.lookup(".track");
             if (track == null) return;
 
-            // 计算蓝色区域百分比（0~100）
+            // 根据当前主题获取进度条颜色
+            String primaryColor;
+            switch (themeManager.getCurrentTheme()) {
+                case DARK:
+                    primaryColor = "#FF6347";
+                    break;
+                case RETRO:
+                    primaryColor = "#A52A2A";
+                    break;
+                default: // LIGHT
+                    primaryColor = "#1E90FF";
+                    break;
+            }
+
+            // 计算进度百分比
             double progressPercent = Math.max(0, Math.min(100, progress * 100));
 
+            String trackColor;
+            switch (themeManager.getCurrentTheme()) {
+                case DARK:
+                    trackColor = "#444444";
+                    break;
+                case RETRO:
+                    trackColor = "#DEB887";
+                    break;
+                default: // LIGHT
+                    trackColor = "#e0e0e0";
+                    break;
+            }
             String gradientStyle = String.format(
                     "-fx-background-color: linear-gradient(to right, " +
-                            "#1E90FF 0%%, " +          // 蓝色起始
-                            "#1E90FF %.2f%%, " +      // 蓝色结束（进度位置）
-                            "#444444 %.2f%%, " +      // 灰色起始（进度位置）
-                            "#444444 100%%);",         // 灰色结束
-                    progressPercent, progressPercent
+                            "%s 0%%, " +
+                            "%s %.2f%%, " +
+                            "%s %.2f%%, " +      // 使用具体颜色值
+                            "%s 100%%);",
+                    primaryColor, primaryColor, progressPercent, trackColor, progressPercent, trackColor
             );
 
             track.setStyle(gradientStyle);

@@ -12,9 +12,9 @@ public class ThemeManager {
     private static ThemeManager instance;
     // 主题枚举（定义所有支持的主题）
     public enum Theme {
-        LIGHT("浅色主题", "css/theme-light.css"),
-        DARK("深色主题", "css/theme-dark.css"),
-        RETRO("复古主题", "css/theme-retro.css");
+        LIGHT("浅色主题", "css/themelight.css"),
+        DARK("深色主题", "css/themedark.css"),
+        RETRO("复古主题", "css/themeretro.css");
 
         private final String displayName; // 显示名称
         private final String cssPath;     // CSS文件路径
