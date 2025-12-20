@@ -15,8 +15,9 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.text.Text?>
+<?import javafx.scene.control.TextField?>
 
-<BorderPane xmlns="http://javafx.com/javafx"
+<BorderPane xmlns="http://javafx.com/javafx/17.0.2-ea"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.multimediaplayer.PlayerController"
             prefWidth="800.0" prefHeight="600.0"
@@ -36,25 +37,12 @@
               prefHeight="40.0"
               minHeight="40.0">
             <padding>
-                <Insets top="0" right="0" bottom="0" left="10"/>
+                <Insets top="0" right="10" bottom="0" left="10"/>
             </padding>
             <children>
                 <Button fx:id="openBtn"
                         text="📂 选择媒体文件"
                         prefWidth="120.0"
-                        prefHeight="30.0"
-                        style="-fx-background-color: #363636;
-                               -fx-text-fill: #ffffff;
-                               -fx-font-family: 'Microsoft YaHei';
-                               -fx-font-size: 13px;
-                               -fx-background-radius: 6px;
-                               -fx-cursor: hand;
-                               -fx-padding: 0 10px;
-                               -fx-border-width: 0;
-                               -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
-                <Button fx:id="addToPlaylistBtn"
-                        text="➕ 添加到列表"
-                        prefWidth="100.0"
                         prefHeight="30.0"
                         style="-fx-background-color: #363636;
                                -fx-text-fill: #ffffff;
@@ -91,6 +79,20 @@
                                -fx-padding: 0 10px;
                                -fx-border-width: 0;
                                -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+                <!-- 播放列表按钮放在功能按钮后面 -->
+                <ToggleButton fx:id="playlistToggleBtn"
+                              text="≡"
+                              style="-fx-background-color: #363636;
+                                     -fx-text-fill: #ffffff;
+                                     -fx-font-size: 16px;
+                                     -fx-pref-width: 40px;
+                                     -fx-pref-height: 30px;
+                                     -fx-border-width: 0;
+                                     -fx-cursor: hand;
+                                     -fx-background-radius: 6px;
+                                     -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"
+                              alignment="CENTER"/>
+
                 <Label fx:id="fileNameLabel"
                        text="未选择文件"
                        style="-fx-text-fill: #cccccc;
@@ -106,6 +108,7 @@
     <!-- 中间媒体区域 + 折叠列表 -->
     <center>
         <StackPane minWidth="0" minHeight="0">
+            <!-- 媒体播放容器 -->
             <StackPane fx:id="mediaContainer"
                        style="-fx-background-color: black;"
                        minWidth="0" minHeight="0">
@@ -117,11 +120,12 @@
                                preserveRatio="true"
                                fitWidth="${mediaContainer.width}"
                                fitHeight="${mediaContainer.height}"/>
+                    <!-- 移除初始白色背景：将visible设为false，由控制器控制显示/隐藏 -->
                     <Rectangle fx:id="blackMask"
                                width="${mediaContainer.width}"
                                height="${mediaContainer.height}"
                                fill="black"
-                               visible="true"/>
+                               visible="false"/>
                     <ImageView fx:id="bgImage"
                                preserveRatio="true"
                                pickOnBounds="false"
@@ -135,57 +139,83 @@
                 </children>
             </StackPane>
 
+            <!-- 播放列表容器（通过ToggleButton控制显示/隐藏）-->
             <VBox fx:id="playlistContainer"
-                  style="-fx-background-color: rgba(34, 34, 34, 0.8);
+                  style="-fx-background-color: rgba(34, 34, 34, 0.95);
                          -fx-border-width: 0 0 0 1px;
-                         -fx-border-color: rgba(68, 68, 68, 0.8);
-                         -fx-effect: dropshadow(gaussian, #000000, 5, 0, 0, 2);"
+                         -fx-border-color: rgba(68, 68, 68, 0.9);
+                         -fx-effect: dropshadow(gaussian, #000000, 10, 0, 0, 3);"
                   prefWidth="280.0"
-                  minWidth="40.0"
-                  maxWidth="280.0">
-                <StackPane.alignment>
-                    <Pos fx:constant="CENTER_RIGHT"/>
-                </StackPane.alignment>
+                  minWidth="0"
+                  maxWidth="280.0"
+                  StackPane.alignment="CENTER_RIGHT"
+                  visible="false">
+                <children>
+                    <HBox alignment="CENTER_LEFT"
+                          style="-fx-background-color: rgba(51, 51, 51, 0.95);
+                                 -fx-padding: 8px 10px;">
+                        <children>
+                            <Label text="🎵 播放列表"
+                                   style="-fx-text-fill: #ffffff;
+                                          -fx-font-family: 'Microsoft YaHei';
+                                          -fx-font-size: 14px;
+                                          -fx-font-weight: bold;"/>
+                            <HBox HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="playlistCountLabel"
+                                   text="0 首"
+                                   style="-fx-text-fill: #aaaaaa;
+                                          -fx-font-family: 'Microsoft YaHei';
+                                          -fx-font-size: 12px;"/>
+                        </children>
+                    </HBox>
 
-                <ToggleButton fx:id="playlistToggleBtn"
-                              text="≡"
-                              style="-fx-background-color: rgba(51, 51, 51, 0.8);
-                                     -fx-text-fill: #ffffff;
-                                     -fx-font-size: 16px;
-                                     -fx-pref-width: 40px;
-                                     -fx-pref-height: 40px;
-                                     -fx-border-width: 0;
-                                     -fx-cursor: hand;"
-                              alignment="CENTER"
-                              VBox.vgrow="NEVER">
-                    <padding>
-                        <Insets top="0" right="0" bottom="0" left="0"/>
-                    </padding>
-                </ToggleButton>
+                    <!-- 搜索框 -->
+                    <HBox style="-fx-padding: 5px 10px;"
+                          alignment="CENTER">
+                        <TextField fx:id="searchField"
+                                   promptText="搜索..."
+                                   prefWidth="260.0"
+                                   style="-fx-background-color: rgba(60, 60, 60, 0.8);
+                                          -fx-text-fill: #ffffff;
+                                          -fx-font-family: 'Microsoft YaHei';
+                                          -fx-font-size: 13px;
+                                          -fx-background-radius: 4px;
+                                          -fx-border-color: rgba(80, 80, 80, 0.8);
+                                          -fx-border-radius: 4px;
+                                          -fx-border-width: 1px;
+                                          -fx-padding: 3px 8px;"/>
+                    </HBox>
 
-                <VBox fx:id="playlistContent"
-                      style="-fx-background-color: transparent;"
-                      VBox.vgrow="ALWAYS"
-                      visible="false">
-                    <Label text="🎵 播放列表"
-                           style="-fx-text-fill: #ffffff;
-                                  -fx-font-family: 'Microsoft YaHei';
-                                  -fx-font-size: 14px;
-                                  -fx-font-weight: bold;
-                                  -fx-padding: 8px 10px;
-                                  -fx-background-color: rgba(51, 51, 51, 0.8);"/>
                     <ListView fx:id="playlistView"
                               style="-fx-background-color: transparent;
-                                     -fx-text-fill: #ffffff;
-                                     -fx-font-family: 'Microsoft YaHei';
-                                     -fx-font-size: 13px;
+                                     -fx-control-inner-background: transparent;
+                                     -fx-background-insets: 0;
+                                     -fx-padding: 0;
+                                     -fx-border-width: 0;
                                      -fx-selection-bar: rgba(30, 144, 255, 0.8);
                                      -fx-selection-bar-non-focused: rgba(30, 144, 255, 0.8);
-                                     -fx-cell-hover-color: rgba(51, 51, 51, 0.8);
-                                     -fx-border-width: 0;"
-                              VBox.vgrow="ALWAYS"/>
-                </VBox>
+                                     -fx-cell-hover-color: rgba(51, 51, 51, 0.6);
+                                     -fx-cell-focus-inner-border: transparent;
+                                     -fx-focus-color: transparent;
+                                     -fx-faint-focus-color: transparent;
+                                     -fx-border-color: transparent;
+                                     -fx-border-insets: 0;
+                                     -fx-background-radius: 0;
+                                     -fx-border-radius: 0;"
+                              VBox.vgrow="ALWAYS">
+                        <!-- 自定义列表项样式 -->
+                        <placeholder>
+                            <Label text="播放列表为空"
+                                   style="-fx-text-fill: #888888;
+                                          -fx-font-family: 'Microsoft YaHei';
+                                          -fx-font-size: 13px;
+                                          -fx-alignment: center;
+                                          -fx-padding: 20px;"/>
+                        </placeholder>
+                    </ListView>
+                </children>
             </VBox>
+
         </StackPane>
     </center>
 
@@ -223,7 +253,7 @@
                               -fx-border-color: #666666 transparent transparent transparent;
                               -fx-border-width: 1px 0 0 0;
                               -fx-effect: innershadow(gaussian, #222222, 5, 0, 0, 2);
-                              -fx-drop-shadow: dropshadow(gaussian, #000000, 3, 0, 0, 1);"
+                              -fx-effect: dropshadow(gaussian, #000000, 3, 0, 0, 1);"
                        prefHeight="40.0"
                        minHeight="40.0">
                 <padding>
