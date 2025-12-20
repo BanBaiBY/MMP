@@ -53,18 +53,18 @@ public class PlayerController {
     private Image bgImageObj;
     private boolean isPlaying = false;
     private boolean isDraggingProgress = false;
-    private boolean isMediaEnded = false;
+    private boolean isMediaEnded = false; // 标记是否播放结束
 
     // 内置矢量图标
     private final Polygon playIcon;
     private final HBox pauseIcon;
-    // 快进/后退按钮图标（双三角形）
-    private final HBox rewindIcon;    // << 图标（修正方向）
+    private final HBox rewindIcon;    // << 图标
     private final HBox forwardIcon;   // >> 图标
 
     // 倍速相关
     private final List<Double> speedOptions = Arrays.asList(0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0);
-    private double currentSpeed = 1.0;
+    private static final double DEFAULT_SPEED = 1.0; // 初始默认倍速
+    private double currentSpeed = DEFAULT_SPEED;     // 当前倍速
     private ContextMenu speedMenu;
 
     // 快进/后退时间（秒）
@@ -92,25 +92,24 @@ public class PlayerController {
         pauseIcon.setAlignment(Pos.CENTER);
         pauseIcon.setPrefSize(24, 24);
 
-        // 修正：后退图标（<<）- 两个向左的三角形（方向更准确）
-        Polygon tri1Left = new Polygon(4.0, 4.0, 4.0, 20.0, 16.0, 12.0);  // 左侧三角形
-        Polygon tri2Left = new Polygon(12.0, 4.0, 12.0, 20.0, 24.0, 12.0); // 右侧三角形
-        // 反转三角形方向（向左）
+        // 后退图标（<<）- 两个向左的三角形
+        Polygon tri1Left = new Polygon(4.0, 4.0, 4.0, 20.0, 16.0, 12.0);
+        Polygon tri2Left = new Polygon(12.0, 4.0, 12.0, 20.0, 24.0, 12.0);
         tri1Left.getPoints().setAll(
-                20.0, 4.0,  // 上顶点
-                20.0, 20.0, // 下顶点
-                8.0, 12.0   // 左顶点
+                20.0, 4.0,
+                20.0, 20.0,
+                8.0, 12.0
         );
         tri2Left.getPoints().setAll(
-                12.0, 4.0,  // 上顶点
-                12.0, 20.0, // 下顶点
-                0.0, 12.0   // 左顶点
+                12.0, 4.0,
+                12.0, 20.0,
+                0.0, 12.0
         );
         tri1Left.setFill(Color.WHITE);
         tri2Left.setFill(Color.WHITE);
         tri1Left.setSmooth(true);
         tri2Left.setSmooth(true);
-        rewindIcon = new HBox(1, tri2Left, tri1Left); // 顺序调整：左三角形在前，右三角形在后
+        rewindIcon = new HBox(1, tri2Left, tri1Left);
         rewindIcon.setAlignment(Pos.CENTER);
         rewindIcon.setPrefSize(24, 24);
 
@@ -135,7 +134,6 @@ public class PlayerController {
         fileNameLabel.setText("未选择文件");
 
         playPauseBtn.setGraphic(playIcon);
-        // 设置快进/后退按钮图标
         rewindBtn.setGraphic(rewindIcon);
         forwardBtn.setGraphic(forwardIcon);
 
@@ -160,7 +158,7 @@ public class PlayerController {
         rewindBtn.setOnAction(e -> seekBackward());
         forwardBtn.setOnAction(e -> seekForward());
 
-        // 初始化倍速按钮
+        // 初始化倍速按钮（默认显示1.00x）
         initSpeedButton();
 
         // 音量绑定
@@ -172,45 +170,6 @@ public class PlayerController {
 
         setPlaybackButtonsDisabled(true);
         updateTimeDisplay(Duration.ZERO, Duration.ZERO);
-    }
-
-    // 后退30秒逻辑
-    private void seekBackward() {
-        if (mediaPlayer == null || mediaPlayer.getTotalDuration() == null) {
-            return;
-        }
-
-        // 获取当前播放时间（秒）
-        double currentTime = mediaPlayer.getCurrentTime().toSeconds();
-        // 计算新时间（不小于0秒）
-        double newTime = Math.max(0, currentTime - SEEK_STEP);
-        // 跳转到新时间
-        mediaPlayer.seek(Duration.seconds(newTime));
-        // 更新进度条和时间显示
-        double progress = newTime / mediaPlayer.getTotalDuration().toSeconds();
-        progressSlider.setValue(progress);
-        updateProgressSliderStyle(progress);
-        updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
-    }
-
-    // 快进30秒逻辑
-    private void seekForward() {
-        if (mediaPlayer == null || mediaPlayer.getTotalDuration() == null) {
-            return;
-        }
-
-        // 获取当前播放时间和总时长（秒）
-        double currentTime = mediaPlayer.getCurrentTime().toSeconds();
-        double totalTime = mediaPlayer.getTotalDuration().toSeconds();
-        // 计算新时间（不超过总时长）
-        double newTime = Math.min(totalTime, currentTime + SEEK_STEP);
-        // 跳转到新时间
-        mediaPlayer.seek(Duration.seconds(newTime));
-        // 更新进度条和时间显示
-        double progress = newTime / totalTime;
-        progressSlider.setValue(progress);
-        updateProgressSliderStyle(progress);
-        updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
     }
 
     // 倍速菜单初始化
@@ -260,6 +219,37 @@ public class PlayerController {
         speedBtn.setText(String.format("%.2fx", currentSpeed));
     }
 
+    // 后退30秒逻辑
+    private void seekBackward() {
+        if (mediaPlayer == null || mediaPlayer.getTotalDuration() == null) {
+            return;
+        }
+
+        double currentTime = mediaPlayer.getCurrentTime().toSeconds();
+        double newTime = Math.max(0, currentTime - SEEK_STEP);
+        mediaPlayer.seek(Duration.seconds(newTime));
+        double progress = newTime / mediaPlayer.getTotalDuration().toSeconds();
+        progressSlider.setValue(progress);
+        updateProgressSliderStyle(progress);
+        updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
+    }
+
+    // 快进30秒逻辑
+    private void seekForward() {
+        if (mediaPlayer == null || mediaPlayer.getTotalDuration() == null) {
+            return;
+        }
+
+        double currentTime = mediaPlayer.getCurrentTime().toSeconds();
+        double totalTime = mediaPlayer.getTotalDuration().toSeconds();
+        double newTime = Math.min(totalTime, currentTime + SEEK_STEP);
+        mediaPlayer.seek(Duration.seconds(newTime));
+        double progress = newTime / totalTime;
+        progressSlider.setValue(progress);
+        updateProgressSliderStyle(progress);
+        updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
+    }
+
     // 打开媒体文件
     private void openMediaFile() {
         FileChooser fileChooser = new FileChooser();
@@ -280,6 +270,10 @@ public class PlayerController {
         blackMask.setVisible(false);
         isMediaEnded = false;
 
+        // 重置倍速为默认值（1.0）
+        currentSpeed = DEFAULT_SPEED;
+        updateSpeedButtonText();
+
         if (mediaPlayer != null) {
             mediaPlayer.dispose();
         }
@@ -289,8 +283,7 @@ public class PlayerController {
             mediaPlayer = new MediaPlayer(media);
             mediaView.setMediaPlayer(mediaPlayer);
             mediaPlayer.setVolume(volumeSlider.getValue());
-            mediaPlayer.setRate(currentSpeed);
-            updateSpeedButtonText();
+            mediaPlayer.setRate(DEFAULT_SPEED);
 
             mediaPlayer.setOnPlaying(() -> {
                 Platform.runLater(() -> {
@@ -309,12 +302,13 @@ public class PlayerController {
                 });
             });
 
+            // 播放结束回调
             mediaPlayer.setOnEndOfMedia(() -> {
                 Platform.runLater(() -> {
-                    mediaPlayer.seek(Duration.ZERO);
+                    mediaPlayer.seek(Duration.ZERO); // 回到开头
                     mediaPlayer.pause();
                     isPlaying = false;
-                    isMediaEnded = true;
+                    isMediaEnded = true; // 标记为播放结束
                     playPauseBtn.setGraphic(playIcon);
 
                     progressSlider.setValue(0.0);
@@ -356,6 +350,37 @@ public class PlayerController {
         }
     }
 
+    // 核心修改：切换播放/暂停 - 重播时重置倍速
+    private void togglePlayPause() {
+        if (mediaPlayer == null) {
+            return;
+        }
+
+        if (isPlaying) {
+            // 暂停逻辑（无修改）
+            mediaPlayer.pause();
+            playPauseBtn.setGraphic(playIcon);
+            bgImage.setVisible(false);
+            blackMask.setVisible(false);
+        } else {
+            // 播放逻辑：如果是播放结束后的重播，先重置倍速
+            if (isMediaEnded) {
+                // 重置倍速为1.0x
+                currentSpeed = DEFAULT_SPEED;
+                mediaPlayer.setRate(DEFAULT_SPEED);
+                updateSpeedButtonText(); // 同步更新按钮显示
+                isMediaEnded = false; // 重置播放结束标记
+            }
+
+            mediaPlayer.play();
+            playPauseBtn.setGraphic(pauseIcon);
+            bgImage.setVisible(false);
+            blackMask.setVisible(false);
+        }
+        isPlaying = !isPlaying;
+        updateCenterPlayIconVisibility();
+    }
+
     // 更新按钮禁用状态
     private void setPlaybackButtonsDisabled(boolean disabled) {
         playPauseBtn.setDisable(disabled);
@@ -391,7 +416,7 @@ public class PlayerController {
     private void initCenterPlayIcon() {
         centerPlayIcon.setOnMouseClicked(e -> {
             if (mediaPlayer != null && !isPlaying) {
-                togglePlayPause();
+                togglePlayPause(); // 点击居中图标也触发重播逻辑，自动重置倍速
             }
         });
 
@@ -551,27 +576,6 @@ public class PlayerController {
                 updateProgressSliderStyle(progress);
             }
         });
-    }
-
-    private void togglePlayPause() {
-        if (mediaPlayer == null) {
-            return;
-        }
-
-        if (isPlaying) {
-            mediaPlayer.pause();
-            playPauseBtn.setGraphic(playIcon);
-            bgImage.setVisible(false);
-            blackMask.setVisible(false);
-        } else {
-            isMediaEnded = false;
-            mediaPlayer.play();
-            playPauseBtn.setGraphic(pauseIcon);
-            bgImage.setVisible(false);
-            blackMask.setVisible(false);
-        }
-        isPlaying = !isPlaying;
-        updateCenterPlayIconVisibility();
     }
 
     private void stopMedia() {
