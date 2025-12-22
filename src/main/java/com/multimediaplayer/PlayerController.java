@@ -11,13 +11,11 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
@@ -32,6 +30,13 @@ import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.stage.Stage;
+import javafx.geometry.Insets;
+import javafx.scene.control.TextInputControl;
+import javafx.scene.control.ScrollPane;
 
 public class PlayerController {
     // 布局控件
@@ -100,6 +105,12 @@ public class PlayerController {
     private final HBox forwardIcon;   // >> 快进图标
     private final HBox prevMediaIcon; // 上一首图标
     private final HBox nextMediaIcon; // 下一首图标
+
+    // 键盘控制
+    private boolean isFullscreen = false;
+    private final double VOLUME_STEP = 0.05;
+    private Label keyboardTipLabel;
+    private StackPane keyboardTipContainer;
 
     public PlayerController() {
         // 播放三角形
@@ -210,6 +221,10 @@ public class PlayerController {
             bgImage.setVisible(true);
             blackMask.setVisible(true);
             bgImage.toFront();
+
+            // 初始化键盘控制
+            initializeKeyboardControls();
+            showInitialKeyboardTip();
         });
 
         // 按钮事件绑定
@@ -243,6 +258,467 @@ public class PlayerController {
 
         setPlaybackButtonsDisabled(true);
         updateTimeDisplay(Duration.ZERO, Duration.ZERO);
+
+        rootPane.setFocusTraversable(true);
+        rootPane.setOnMouseClicked(e -> rootPane.requestFocus());
+    }
+
+    // 初始化键盘控制
+    private void initializeKeyboardControls() {
+        // 监听场景变化
+        rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                setupKeyboardEventHandlers(newScene);
+            }
+        });
+
+        // 立即设置键盘处理器（如果场景已存在）
+        if (rootPane.getScene() != null) {
+            setupKeyboardEventHandlers(rootPane.getScene());
+        }
+    }
+
+    private void setupKeyboardEventHandlers(Scene scene) {
+        // 移除旧的事件处理器（避免重复）
+        scene.removeEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyPress);
+
+        // 添加新的键盘事件处理器
+        scene.addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyPress);
+
+        // 添加F1帮助键的特殊处理（始终可用）
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.F1) {
+                showKeyboardShortcutsDialog();
+                event.consume();
+            }
+        });
+    }
+
+    private void handleKeyPress(KeyEvent event) {
+        // 如果在文本输入框中，除了F1外，忽略其他快捷键
+        if (event.getTarget() instanceof TextInputControl) {
+            if (event.getCode() != KeyCode.F1) {
+                return;
+            }
+        }
+
+        KeyCode keyCode = event.getCode();
+        boolean ctrlDown = event.isControlDown();
+        boolean shiftDown = event.isShiftDown();
+
+        switch (keyCode) {
+            // 播放/暂停
+            case SPACE:
+            case K:
+                togglePlayPause();
+                event.consume();
+                break;
+
+            // 进度控制
+            case RIGHT:
+                if (shiftDown) {
+                    seekForward(); // Shift+右箭头：快进30秒
+                } else if (ctrlDown) {
+                    playNextMedia(); // Ctrl+右箭头：下一首
+                } else {
+                    seek(5); // 右箭头：快进5秒
+                }
+                event.consume();
+                break;
+
+            case LEFT:
+                if (shiftDown) {
+                    seekBackward(); // Shift+左箭头：后退30秒
+                } else if (ctrlDown) {
+                    playPreviousMedia(); // Ctrl+左箭头：上一首
+                } else {
+                    seek(-5); // 左箭头：后退5秒
+                }
+                event.consume();
+                break;
+
+            // 音量控制
+            case UP:
+                if (ctrlDown) {
+                    setVolume(1.0); // Ctrl+上箭头：最大音量
+                } else {
+                    adjustVolume(0.1); // 上箭头：增加10%音量
+                }
+                event.consume();
+                break;
+
+            case DOWN:
+                if (ctrlDown) {
+                    setVolume(0.0); // Ctrl+下箭头：静音
+                } else {
+                    adjustVolume(-0.1); // 下箭头：减少10%音量
+                }
+                event.consume();
+                break;
+
+            // 全屏控制
+            case F:
+            case F11:
+                toggleFullscreen();
+                event.consume();
+                break;
+
+            // 倍速控制
+            case DIGIT1:
+            case NUMPAD1:
+                setPlaybackSpeed(1);
+                event.consume();
+                break;
+
+            case DIGIT2:
+            case NUMPAD2:
+                setPlaybackSpeed(1.5);
+                event.consume();
+                break;
+
+            case DIGIT3:
+            case NUMPAD3:
+                setPlaybackSpeed(2);
+                event.consume();
+                break;
+
+            case DIGIT0:
+            case NUMPAD0:
+                setPlaybackSpeed(0.5);
+                event.consume();
+                break;
+
+            // 静音控制
+            case M:
+                toggleMute();
+                event.consume();
+                break;
+
+            default:
+                // 其他按键不处理
+                break;
+        }
+    }
+
+    // ==================== 键盘控制辅助方法 ====================
+
+    private void seek(int seconds) {
+        if (mediaPlayer == null || !isMediaReady || mediaPlayer.getTotalDuration() == null) {
+            return;
+        }
+
+        double currentTime = mediaPlayer.getCurrentTime().toSeconds();
+        double totalTime = mediaPlayer.getTotalDuration().toSeconds();
+        double newTime = Math.max(0, Math.min(totalTime, currentTime + seconds));
+
+        mediaPlayer.seek(Duration.seconds(newTime));
+        double progress = newTime / totalTime;
+        progressSlider.setValue(progress);
+        updateProgressSliderStyle(progress);
+        updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
+
+        // 显示临时提示
+        showTemporaryTip((seconds > 0 ? "快进 " : "后退 ") + Math.abs(seconds) + " 秒");
+    }
+
+    private void seekToStart() {
+        if (mediaPlayer == null || !isMediaReady) {
+            return;
+        }
+        mediaPlayer.seek(Duration.ZERO);
+        progressSlider.setValue(0.0);
+        updateProgressSliderStyle(0.0);
+        updateTimeDisplay(Duration.ZERO, mediaPlayer.getTotalDuration());
+        showTemporaryTip("跳转到开始");
+    }
+
+    private void seekToEnd() {
+        if (mediaPlayer == null || !isMediaReady || mediaPlayer.getTotalDuration() == null) {
+            return;
+        }
+        mediaPlayer.seek(mediaPlayer.getTotalDuration());
+        progressSlider.setValue(1.0);
+        updateProgressSliderStyle(1.0);
+        updateTimeDisplay(mediaPlayer.getTotalDuration(), mediaPlayer.getTotalDuration());
+        showTemporaryTip("跳转到结束");
+    }
+
+    private void adjustVolume(double delta) {
+        double currentVolume = volumeSlider.getValue();
+        double newVolume = Math.max(0.0, Math.min(1.0, currentVolume + delta));
+        volumeSlider.setValue(newVolume);
+        if (mediaPlayer != null && isMediaReady) {
+            mediaPlayer.setVolume(newVolume);
+        }
+        showTemporaryTip(String.format("音量: %.0f%%", newVolume * 100));
+    }
+
+    private void setVolume(double volume) {
+        volumeSlider.setValue(volume);
+        if (mediaPlayer != null && isMediaReady) {
+            mediaPlayer.setVolume(volume);
+        }
+        showTemporaryTip(volume > 0 ? "最大音量" : "静音");
+    }
+
+    private void toggleMute() {
+        if (mediaPlayer != null && isMediaReady) {
+            if (mediaPlayer.getVolume() > 0) {
+                // 保存当前音量并静音
+                volumeSlider.setValue(0);
+                mediaPlayer.setVolume(0);
+                showTemporaryTip("静音");
+            } else {
+                // 恢复之前音量（默认为0.5）
+                double restoreVolume = volumeSlider.getValue() > 0 ? volumeSlider.getValue() : 0.5;
+                volumeSlider.setValue(restoreVolume);
+                mediaPlayer.setVolume(restoreVolume);
+                showTemporaryTip(String.format("取消静音 (%.0f%%)", restoreVolume * 100));
+            }
+        }
+    }
+
+    private void setPlaybackSpeed(double speed) {
+        if (mediaPlayer != null && isMediaReady) {
+            currentSpeed = speed;
+            mediaPlayer.setRate(currentSpeed);
+            updateSpeedButtonText();
+            showTemporaryTip(String.format("播放速度: %.1fx", currentSpeed));
+        }
+    }
+
+    private void togglePlaylistVisibility() {
+        if (playlistToggleBtn != null) {
+            boolean newState = !playlistToggleBtn.isSelected();
+            playlistToggleBtn.setSelected(newState);
+            showTemporaryTip(newState ? "显示播放列表" : "隐藏播放列表");
+        }
+    }
+
+    private void toggleFullscreen() {
+        Stage stage = (Stage) rootPane.getScene().getWindow();
+        isFullscreen = !stage.isFullScreen();
+        stage.setFullScreen(isFullscreen);
+
+        if (isFullscreen) {
+            // 全屏时显示快捷键提示
+            showKeyboardShortcutsOverlay();
+        } else {
+            // 退出全屏时隐藏提示
+            hideKeyboardShortcutsOverlay();
+        }
+    }
+
+    private void addMediaFileToPlaylist() {
+        openMediaFile(); // 复用打开文件逻辑
+    }
+
+    // 提示系统
+
+    private void showInitialKeyboardTip() {
+        // 创建提示标签
+        keyboardTipLabel = new Label("💡 按 F1 查看键盘快捷键");
+        keyboardTipLabel.setStyle("-fx-background-color: rgba(30, 144, 255, 0.8); " +
+                "-fx-text-fill: white; " +
+                "-fx-padding: 6px 12px; " +
+                "-fx-font-size: 12px; " +
+                "-fx-background-radius: 15px; " +
+                "-fx-cursor: hand;");
+        keyboardTipLabel.setOnMouseClicked(e -> {
+            showKeyboardShortcutsDialog();
+            hideKeyboardTip();
+        });
+
+        keyboardTipContainer = new StackPane(keyboardTipLabel);
+        keyboardTipContainer.setAlignment(Pos.TOP_RIGHT);
+        keyboardTipContainer.setPadding(new Insets(10));
+        keyboardTipContainer.setPickOnBounds(false);
+        keyboardTipContainer.setMouseTransparent(true);
+
+        // 添加到根面板
+        rootPane.getChildren().add(keyboardTipContainer);
+
+        // 1.5秒后自动隐藏
+        Timeline hideTip = new Timeline(
+                new KeyFrame(Duration.seconds(1.5), e -> hideKeyboardTip())
+        );
+        hideTip.play();
+    }
+
+    private void hideKeyboardTip() {
+        if (keyboardTipContainer != null && rootPane.getChildren().contains(keyboardTipContainer)) {
+            Timeline fadeOut = new Timeline(
+                    new KeyFrame(Duration.millis(300),
+                            new KeyValue(keyboardTipContainer.opacityProperty(), 0))
+            );
+            fadeOut.setOnFinished(e -> rootPane.getChildren().remove(keyboardTipContainer));
+            fadeOut.play();
+        }
+    }
+
+    private void showTemporaryTip(String message) {
+        Platform.runLater(() -> {
+            Label tip = new Label(message);
+            tip.setStyle("-fx-background-color: rgba(0, 0, 0, 0.75); " +
+                    "-fx-text-fill: white; " +
+                    "-fx-padding: 8px 12px; " +
+                    "-fx-font-size: 13px; " +
+                    "-fx-background-radius: 6px;");
+
+            StackPane tipContainer = new StackPane(tip);
+            tipContainer.setAlignment(Pos.CENTER);
+            tipContainer.setMouseTransparent(true);
+
+            rootPane.getChildren().add(tipContainer);
+
+            // 自动隐藏
+            Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.seconds(1.5), e -> {
+                        if (rootPane.getChildren().contains(tipContainer)) {
+                            rootPane.getChildren().remove(tipContainer);
+                        }
+                    })
+            );
+            timeline.play();
+        });
+    }
+
+    private void showKeyboardShortcutsOverlay() {
+        GridPane overlay = new GridPane();
+        overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8); " +
+                "-fx-padding: 20px; " +
+                "-fx-background-radius: 10px;");
+        overlay.setHgap(20);
+        overlay.setVgap(10);
+
+        String[][] shortcuts = {
+                {"空格 / K", "播放/暂停"},
+                {"← / →", "快退/快进 5秒"},
+                {"Shift + ←/→", "快退/快进 30秒"},
+                {"↑ / ↓", "音量 +/- 10%"},
+                {"Ctrl + ←/→", "上一首/下一首"},
+                {"F / F11", "全屏切换"},
+                {"ESC", "退出全屏"},  // 修改这里
+                {"M", "静音切换"}
+        };
+
+        int row = 0;
+        for (String[] shortcut : shortcuts) {
+            Label keyLabel = new Label(shortcut[0]);
+            keyLabel.setStyle("-fx-text-fill: #1E90FF; -fx-font-weight: bold;");
+            Label descLabel = new Label(shortcut[1]);
+            descLabel.setStyle("-fx-text-fill: white;");
+
+            overlay.add(keyLabel, 0, row);
+            overlay.add(descLabel, 1, row);
+            row++;
+        }
+
+        StackPane overlayContainer = new StackPane(overlay);
+        overlayContainer.setAlignment(Pos.TOP_CENTER);
+        overlayContainer.setPadding(new Insets(20));
+        overlayContainer.setMouseTransparent(true);
+        overlayContainer.setId("keyboardOverlay");
+
+        rootPane.getChildren().add(overlayContainer);
+
+        // 3秒后自动隐藏
+        Timeline hideOverlay = new Timeline(
+                new KeyFrame(Duration.seconds(3), e -> {
+                    if (rootPane.getChildren().contains(overlayContainer)) {
+                        rootPane.getChildren().remove(overlayContainer);
+                    }
+                })
+        );
+        hideOverlay.play();
+    }
+
+
+    private void hideKeyboardShortcutsOverlay() {
+        rootPane.getChildren().removeIf(node ->
+                node instanceof StackPane && "keyboardOverlay".equals(node.getId()));
+    }
+
+    private void showKeyboardShortcutsDialog() {
+        Platform.runLater(() -> {
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("键盘快捷键");
+            dialog.setHeaderText("多媒体播放器 - 快捷键说明");
+
+            GridPane grid = new GridPane();
+            grid.setHgap(20);
+            grid.setVgap(10);
+            grid.setPadding(new Insets(20));
+
+            // 分类显示快捷键
+            String[][][] categories = {
+                    {
+                            {"播放控制", ""},
+                            {"空格 / K", "播放/暂停"},
+                            {"ESC", "退出全屏"},  // 修改这里
+                            {"Ctrl + ← / →", "上一首/下一首"},
+                    },
+                    {
+                            {"进度控制", ""},
+                            {"← / →", "快退/快进 5秒"},
+                            {"Shift + ← / →", "快退/快进 30秒"},
+                    },
+                    {
+                            {"音量控制", ""},
+                            {"↑ / ↓", "音量 +/- 10%"},
+                            {"Ctrl + ↑ / ↓", "最大/最小音量"},
+                            {"Alt + ↑ / ↓", "音量 +/- 20%"},
+                            {"M", "静音切换"}
+                    },
+                    {
+                            {"界面控制", ""},
+                            {"F / F11", "全屏切换"},
+                            {"F1", "显示帮助"}
+                    },
+                    {
+                            {"功能控制", ""},
+                            {"1-4", "切换倍速 (1.0x, 1.5x, 2.0x, 0.5x)"},
+                    }
+            };
+
+            int col = 0;
+            int maxRows = 0;
+
+            for (String[][] category : categories) {
+                VBox categoryBox = new VBox(5);
+                categoryBox.setPadding(new Insets(0, 15, 0, 0));
+
+                for (String[] item : category) {
+                    HBox rowBox = new HBox(10);
+                    rowBox.setAlignment(Pos.CENTER_LEFT);
+
+                    Label keyLabel = new Label(item[0]);
+                    keyLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #1E90FF; -fx-min-width: 120px;");
+                    Label descLabel = new Label(item[1]);
+                    descLabel.setStyle("-fx-text-fill: #333;");
+
+                    rowBox.getChildren().addAll(keyLabel, descLabel);
+                    categoryBox.getChildren().add(rowBox);
+
+                    if (category.length > maxRows) {
+                        maxRows = category.length;
+                    }
+                }
+
+                grid.add(categoryBox, col, 0);
+                col++;
+            }
+
+            ScrollPane scrollPane = new ScrollPane(grid);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setPrefHeight(300);
+
+            dialog.getDialogPane().setContent(scrollPane);
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+            dialog.getDialogPane().setPrefSize(800, 400);
+
+            dialog.showAndWait();
+        });
     }
 
     // 后退30秒逻辑
@@ -318,7 +794,7 @@ public class PlayerController {
         speedBtn.setDisable(true);
     }
 
-    // 初始化上一首/下一首按钮（新增）
+    // 初始化上一首/下一首按钮
     private void initPrevNextButtons() {
         // 上一首按钮样式
         prevMediaBtn.setStyle("-fx-background-color: #363636; " +
@@ -348,7 +824,7 @@ public class PlayerController {
         updatePrevNextBtnStatus();
     }
 
-    // 上一首媒体逻辑（新增）
+    // 上一首媒体逻辑
     private void playPreviousMedia() {
         if (isSwitchingMedia || playlist.isEmpty()) {
             return;
@@ -358,7 +834,7 @@ public class PlayerController {
         }
     }
 
-    // 下一首媒体逻辑（新增）
+    // 下一首媒体逻辑
     private void playNextMedia() {
         if (isSwitchingMedia || playlist.isEmpty()) {
             return;
