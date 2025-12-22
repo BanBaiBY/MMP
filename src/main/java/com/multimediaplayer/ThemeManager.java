@@ -162,7 +162,7 @@ public class ThemeManager {
         // 获取所有主题对应的CSS文件路径列表
         List<String> themeCssPaths = Arrays.stream(Theme.values())
                 .map(Theme::getCssPath)
-                .collect(Collectors.toList());
+                .toList();
 
         // 移除场景中所有匹配主题CSS路径的样式文件
         scene.getStylesheets().removeIf(stylesheet -> {

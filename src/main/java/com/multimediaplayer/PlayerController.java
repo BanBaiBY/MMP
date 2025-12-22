@@ -1158,12 +1158,11 @@ public class PlayerController {
      * @param newTime 新的播放时间（秒）
      */
     private void updateProgressAndTime(double newTime) {
-        final double finalNewTime = newTime;
         final double total = mediaPlayer.getTotalDuration().toSeconds();
-        final double progress = finalNewTime / total;
+        final double progress = newTime / total;
         progressSlider.setValue(progress);
         updateProgressSliderStyle(progress);
-        updateTimeDisplay(Duration.seconds(finalNewTime), mediaPlayer.getTotalDuration());
+        updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
     }
 
     /**
@@ -1199,7 +1198,7 @@ public class PlayerController {
         playlistView.setItems(filteredPlaylist);
 
         // 设置列表单元格自定义样式
-        playlistView.setCellFactory(param -> new ListCell<File>() {
+        playlistView.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(File file, boolean empty) {
                 super.updateItem(file, empty);
@@ -1522,6 +1521,7 @@ public class PlayerController {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("播放错误");
         alert.setHeaderText("无法播放文件");
+        assert file != null;
         alert.setContentText("文件格式不受支持或已损坏：" + file.getName());
         alert.showAndWait();
 
@@ -1669,16 +1669,16 @@ public class PlayerController {
             // 根据主题获取样式颜色
             String primaryColor, trackColor;
             ThemeManager.Theme currentTheme = themeManager.getCurrentTheme();
-            switch (currentTheme) {
-                case DARK:
+            trackColor = switch (currentTheme) {
+                case DARK -> {
                     primaryColor = "#FF6347"; // 深色主题主色
-                    trackColor = "#444444";   // 深色主题轨道色
-                    break;
-                case LIGHT:
-                default:
+                    yield "#444444";
+                }
+                default -> {
                     primaryColor = "#1E90FF"; // 浅色主题主色
-                    trackColor = "#e0e0e0";   // 浅色主题轨道色
-            }
+                    yield "#e0e0e0";
+                }
+            };
 
             // 构建渐变样式并应用
             final double progressPercent = finalProgress * 100;
