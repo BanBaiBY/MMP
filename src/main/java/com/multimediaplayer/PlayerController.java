@@ -51,6 +51,8 @@ public class PlayerController {
     @FXML private Button rewindBtn;   // << 后退30秒
     @FXML private Button forwardBtn;  // >> 快进30秒
     @FXML private Button speedBtn;
+    @FXML private Button prevMediaBtn; // 上一首（新增）
+    @FXML private Button nextMediaBtn; // 下一首（新增）
     @FXML private Slider volumeSlider;
     @FXML private Slider progressSlider;
     @FXML private Text currentTimeLabel;
@@ -96,6 +98,8 @@ public class PlayerController {
     private final HBox pauseIcon;
     private final HBox rewindIcon;    // << 后退图标
     private final HBox forwardIcon;   // >> 快进图标
+    private final HBox prevMediaIcon; // 上一首图标
+    private final HBox nextMediaIcon; // 下一首图标
 
     public PlayerController() {
         // 播放三角形
@@ -142,6 +146,30 @@ public class PlayerController {
         forwardIcon.setAlignment(Pos.CENTER);
         forwardIcon.setPrefSize(24, 24);
 
+        // 上一首图标
+        Polygon tri3Left = new Polygon(
+                12.0, 5.0,   // 箭头左上点
+                12.0, 25.0,  // 箭头左下点
+                4.0, 15.0    // 箭头尖点
+        );
+        tri3Left.setFill(Color.WHITE);
+        tri3Left.setSmooth(true);
+        prevMediaIcon = new HBox(tri3Left); // 仅包裹单个箭头
+        prevMediaIcon.setAlignment(Pos.CENTER);
+        prevMediaIcon.setPrefSize(24,24);
+
+        // 下一首图标
+        Polygon tri3Right = new Polygon(
+                8.0, 5.0,    // 箭头右上点
+                8.0, 25.0,   // 箭头右下点
+                16.0, 15.0   // 箭头尖点
+        );
+        tri3Right.setFill(Color.WHITE); //
+        tri3Right.setSmooth(true);
+        nextMediaIcon = new HBox(tri3Right); // 仅包裹单个箭头
+        nextMediaIcon.setAlignment(Pos.CENTER);
+        nextMediaIcon.setPrefSize(24,24);
+
         // 初始化倍速菜单
         initSpeedMenu();
 
@@ -158,12 +186,15 @@ public class PlayerController {
         playPauseBtn.setGraphic(playIcon);
         rewindBtn.setGraphic(rewindIcon);
         forwardBtn.setGraphic(forwardIcon);
+        prevMediaBtn.setGraphic(prevMediaIcon); // 绑定上一首图标（新增）
+        nextMediaBtn.setGraphic(nextMediaIcon); // 绑定下一首图标（新增）
 
         // 基础功能初始化
         initCenterPlayIcon();
         initMediaContainerClick();
         initProgressSlider();
-        initSpeedButton(); // 倍速按钮初始化
+        initSpeedButton();
+        initPrevNextButtons(); // 初始化上一首/下一首按钮（新增）
 
         // 播放列表功能初始化
         initPlaylist();
@@ -207,6 +238,7 @@ public class PlayerController {
                 return fileName.contains(searchText);
             });
             updatePlaylistCount();
+            updatePrevNextBtnStatus(); // 列表变化更新按钮状态
         });
 
         setPlaybackButtonsDisabled(true);
@@ -286,6 +318,75 @@ public class PlayerController {
         speedBtn.setDisable(true);
     }
 
+    // 初始化上一首/下一首按钮（新增）
+    private void initPrevNextButtons() {
+        // 上一首按钮样式
+        prevMediaBtn.setStyle("-fx-background-color: #363636; " +
+                "-fx-border-width: 0; " +
+                "-fx-cursor: hand; " +
+                "-fx-padding: 0; " +
+                "-fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);");
+        prevMediaBtn.setPrefWidth(40.0);
+        prevMediaBtn.setPrefHeight(30.0);
+        prevMediaBtn.setAlignment(Pos.CENTER);
+
+        // 下一首按钮样式
+        nextMediaBtn.setStyle("-fx-background-color: #363636; " +
+                "-fx-border-width: 0; " +
+                "-fx-cursor: hand; " +
+                "-fx-padding: 0; " +
+                "-fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);");
+        nextMediaBtn.setPrefWidth(40.0);
+        nextMediaBtn.setPrefHeight(30.0);
+        nextMediaBtn.setAlignment(Pos.CENTER);
+
+        // 绑定事件
+        prevMediaBtn.setOnAction(e -> playPreviousMedia());
+        nextMediaBtn.setOnAction(e -> playNextMedia());
+
+        // 初始禁用
+        updatePrevNextBtnStatus();
+    }
+
+    // 上一首媒体逻辑（新增）
+    private void playPreviousMedia() {
+        if (isSwitchingMedia || playlist.isEmpty()) {
+            return;
+        }
+        if (currentPlayingIndex > 0) {
+            playFromPlaylist(currentPlayingIndex - 1);
+        }
+    }
+
+    // 下一首媒体逻辑（新增）
+    private void playNextMedia() {
+        if (isSwitchingMedia || playlist.isEmpty()) {
+            return;
+        }
+        if (currentPlayingIndex < playlist.size() - 1) {
+            playFromPlaylist(currentPlayingIndex + 1);
+        }
+    }
+
+    private void updatePrevNextBtnStatus() {
+        // 播放列表为空，两个按钮都禁用
+        if (playlist.isEmpty()) {
+            prevMediaBtn.setDisable(true);
+            nextMediaBtn.setDisable(true);
+            return;
+        }
+        // 当前无播放索引（未播放任何曲目），两个按钮都禁用
+        if (currentPlayingIndex == -1) {
+            prevMediaBtn.setDisable(true);
+            nextMediaBtn.setDisable(true);
+            return;
+        }
+        // 当前是第一首，上一首禁用，下一首根据是否有下一首判断
+        prevMediaBtn.setDisable(currentPlayingIndex <= 0);
+        // 当前是最后一首，下一首禁用，上一首根据是否有上一首判断
+        nextMediaBtn.setDisable(currentPlayingIndex >= playlist.size() - 1);
+    }
+
     // 更新倍速按钮文本
     private void updateSpeedButtonText() {
         speedBtn.setText(String.format("%.2fx", currentSpeed));
@@ -356,6 +457,7 @@ public class PlayerController {
 
         playlist.addListener((javafx.collections.ListChangeListener<File>) change -> {
             updatePlaylistCount();
+            updatePrevNextBtnStatus(); // 列表变化时更新按钮状态
         });
 
         updatePlaylistCount();
@@ -402,8 +504,9 @@ public class PlayerController {
                 mediaPlayer = null;
             }
 
-            currentSpeed = 1.0; // 重置倍速变量为默认值
-            updateSpeedButtonText(); // 立即更新倍速按钮显示
+            // 强制重置倍速
+            currentSpeed = 1.0;
+            updateSpeedButtonText();
 
             // 更新UI状态
             fileNameLabel.setText(file.getName());
@@ -430,11 +533,11 @@ public class PlayerController {
             mediaPlayer = new MediaPlayer(media);
             mediaView.setMediaPlayer(mediaPlayer);
 
-            // 设置音量和倍速（此时currentSpeed已为1.0）
+            // 设置音量和倍速
             if (volumeSlider.getValue() > 0) {
                 mediaPlayer.setVolume(volumeSlider.getValue());
             }
-            mediaPlayer.setRate(currentSpeed); // 3. 给新媒体播放器设置默认倍速
+            mediaPlayer.setRate(currentSpeed);
 
             // 监听媒体准备就绪
             mediaPlayer.setOnReady(() -> {
@@ -442,7 +545,7 @@ public class PlayerController {
                     try {
                         isMediaReady = true;
 
-                        // 就绪后再次确认倍速为1.0，防止隐性覆盖
+                        // 再次确认倍速
                         currentSpeed = 1.0;
                         mediaPlayer.setRate(currentSpeed);
                         updateSpeedButtonText();
@@ -477,6 +580,9 @@ public class PlayerController {
                         // 刷新列表项样式
                         playlistView.refresh();
                         setPlaybackButtonsDisabled(false); // 启用播放控件
+
+                        // 更新上一首/下一首按钮状态
+                        updatePrevNextBtnStatus();
 
                         isSwitchingMedia = false;
                     } catch (Exception e) {
@@ -533,7 +639,6 @@ public class PlayerController {
         }
     }
 
-
     // 媒体错误处理方法
     private void handleMediaError(File file) {
         System.err.println("媒体播放错误：" + (mediaPlayer != null && mediaPlayer.getError() != null ?
@@ -553,6 +658,7 @@ public class PlayerController {
         playlistView.refresh();
         updateCenterPlayIconVisibility();
         setPlaybackButtonsDisabled(true);
+        updatePrevNextBtnStatus(); // 错误时更新按钮状态
 
         // 从播放列表中移除损坏的文件
         if (file != null && playlist.contains(file)) {
@@ -578,6 +684,8 @@ public class PlayerController {
             updateSpeedButtonText();
             // 自动播放下一曲
             playFromPlaylist(currentPlayingIndex + 1);
+            // 补充：更新按钮状态
+            updatePrevNextBtnStatus();
         } else {
             // 重置播放状态
             isPlaying = false;
@@ -599,8 +707,11 @@ public class PlayerController {
 
             updateCenterPlayIconVisibility();
             playlistView.refresh();
+            // 更新按钮状态
+            updatePrevNextBtnStatus();
         }
     }
+
 
     // 从播放列表移除选中项
     private void removeSelectedFromPlaylist() {
@@ -652,6 +763,7 @@ public class PlayerController {
 
         playlistView.refresh();
         updatePlaylistCount();
+        updatePrevNextBtnStatus(); // 更新按钮状态
     }
 
     // 清空播放列表
@@ -690,6 +802,7 @@ public class PlayerController {
         // 刷新视图
         playlistView.refresh();
         updatePlaylistCount();
+        updatePrevNextBtnStatus(); // 更新按钮状态
     }
 
     // 打开媒体文件
@@ -735,6 +848,8 @@ public class PlayerController {
         speedBtn.setDisable(disabled);
         rewindBtn.setDisable(disabled);
         forwardBtn.setDisable(disabled);
+        prevMediaBtn.setDisable(disabled || playlist.isEmpty() || currentPlayingIndex <= 0); // 新增
+        nextMediaBtn.setDisable(disabled || playlist.isEmpty() || currentPlayingIndex >= playlist.size() - 1); // 新增
         centerPlayIcon.setVisible(!disabled && mediaPlayer != null && isMediaReady && !isPlaying);
     }
 
@@ -744,6 +859,8 @@ public class PlayerController {
             // 如果有播放列表项，播放第一个
             if (!playlist.isEmpty() && currentPlayingIndex == -1) {
                 playFromPlaylist(0);
+                // 更新按钮状态
+                updatePrevNextBtnStatus();
             }
             return;
         }
