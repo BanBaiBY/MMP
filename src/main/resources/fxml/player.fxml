@@ -16,15 +16,18 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ComboBox?>
 
+<!-- 播放器主布局：采用BorderPane分上、中、下三区域布局 -->
 <BorderPane xmlns="http://javafx.com/javafx/17.0.17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.multimediaplayer.PlayerController"
-            prefWidth="800.0" prefHeight="600.0"
+            prefWidth="800.0"
+            prefHeight="600.0"
             fx:id="rootPane"
             style="-fx-background-color: #000000;">
 
-    <!-- 顶部导航栏（移除原移除/清空按钮，新增设置按钮） -->
+    <!-- 顶部导航栏：包含文件操作、播放列表管理、主题切换功能 -->
     <top>
         <HBox fx:id="topNavi"
               spacing="15.0"
@@ -40,6 +43,7 @@
                 <Insets top="0" right="10" bottom="0" left="10"/>
             </padding>
             <children>
+                <!-- 选择媒体文件按钮 -->
                 <Button fx:id="openBtn"
                         text="📂 选择媒体文件"
                         prefWidth="120.0"
@@ -53,6 +57,7 @@
                                -fx-padding: 0 10px;
                                -fx-border-width: 0;
                                -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+
                 <!-- 新增设置按钮 -->
                 <Button fx:id="settingsBtn"
                         text="设置"
@@ -67,6 +72,8 @@
                                -fx-padding: 0 10px;
                                -fx-border-width: 0;
                                -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+
+                <!-- 播放列表展开/折叠切换按钮 -->
                 <ToggleButton fx:id="playlistToggleBtn"
                               text="≡"
                               style="-fx-background-color: #363636;
@@ -80,6 +87,7 @@
                                      -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"
                               alignment="CENTER"/>
 
+                <!-- 当前播放文件名称显示标签 -->
                 <Label fx:id="fileNameLabel"
                        text="未选择文件"
                        style="-fx-text-fill: #cccccc;
@@ -88,34 +96,59 @@
                               -fx-padding: 0 10px;
                               -fx-text-overrun: ellipsis;"
                        HBox.hgrow="ALWAYS"/>
+
+                <!-- 主题切换下拉框容器 -->
+                <HBox alignment="CENTER" spacing="5.0">
+                    <Label text="主题："
+                           style="-fx-text-fill: #cccccc;
+                                  -fx-font-family: 'Microsoft YaHei';
+                                  -fx-font-size: 13px;"/>
+                    <ComboBox fx:id="themeComboBox"
+                              prefWidth="120.0"
+                              prefHeight="30.0"
+                              style="-fx-background-color: #363636;
+                                     -fx-text-fill: #ffffff;
+                                     -fx-font-family: 'Microsoft YaHei';
+                                     -fx-font-size: 12px;
+                                     -fx-prompt-text-fill: #999999;
+                                     -fx-control-inner-background: #363636;
+                                     -fx-selection-bar: #505050;
+                                     -fx-selection-bar-text: #ffffff;"/>
+                </HBox>
             </children>
         </HBox>
     </top>
 
-    <!-- 中间媒体区域 + 折叠播放列表 -->
+    <!-- 中间核心区域：包含媒体播放区和折叠式播放列表 -->
     <center>
         <StackPane minWidth="0" minHeight="0">
-            <!-- 媒体播放容器 -->
+            <!-- 媒体播放容器：承载视频/音频播放、背景图、遮罩和中心播放按钮 -->
             <StackPane fx:id="mediaContainer"
                        style="-fx-background-color: black;"
-                       minWidth="0" minHeight="0">
+                       minWidth="0"
+                       minHeight="0">
                 <alignment>
                     <Pos fx:constant="CENTER"/>
                 </alignment>
                 <children>
+                    <!-- 媒体视图：用于显示视频内容，自动适配容器大小 -->
                     <MediaView fx:id="mediaView"
                                preserveRatio="true"
                                fitWidth="${mediaContainer.width}"
                                fitHeight="${mediaContainer.height}"/>
+                    <!-- 黑色遮罩：用于优化视觉效果，非播放状态下显示 -->
                     <Rectangle fx:id="blackMask"
                                width="${mediaContainer.width}"
                                height="${mediaContainer.height}"
                                fill="black"
                                visible="false"/>
+                    <!-- 背景图片：无媒体播放时显示的默认背景 -->
                     <ImageView fx:id="bgImage"
                                preserveRatio="true"
                                pickOnBounds="false"
-                               fitWidth="0" fitHeight="0"/>
+                               fitWidth="0"
+                               fitHeight="0"/>
+                    <!-- 中心播放按钮：悬浮在媒体区域中央的大型播放触发按钮 -->
                     <Polygon fx:id="centerPlayIcon"
                              points="0.0,0.0, 0.0,60.0, 80.0,30.0"
                              fill="rgba(255,255,255,0.7)"
@@ -125,7 +158,7 @@
                 </children>
             </StackPane>
 
-            <!-- 播放列表容器（底部新增移除/清空按钮）-->
+            <!-- 折叠式播放列表容器：默认隐藏，通过切换按钮展开/收起 -->
             <VBox fx:id="playlistContainer"
                   style="-fx-background-color: rgba(34, 34, 34, 0.95);
                          -fx-border-width: 0 0 0 1px;
@@ -137,6 +170,7 @@
                   StackPane.alignment="CENTER_RIGHT"
                   visible="false">
                 <children>
+                    <!-- 播放列表标题栏：显示标题和媒体数量统计 -->
                     <HBox alignment="CENTER_LEFT"
                           style="-fx-background-color: rgba(51, 51, 51, 0.95);
                                  -fx-padding: 8px 10px;">
@@ -155,7 +189,7 @@
                         </children>
                     </HBox>
 
-                    <!-- 搜索框 -->
+                    <!-- 播放列表搜索框：用于筛选列表中的媒体文件 -->
                     <HBox style="-fx-padding: 5px 10px;"
                           alignment="CENTER">
                         <TextField fx:id="searchField"
@@ -172,6 +206,7 @@
                                           -fx-padding: 3px 8px;"/>
                     </HBox>
 
+                    <!-- 播放列表视图：显示所有添加的媒体文件，支持点击播放 -->
                     <ListView fx:id="playlistView"
                               style="-fx-background-color: transparent;
                                      -fx-control-inner-background: transparent;
@@ -189,7 +224,7 @@
                                      -fx-background-radius: 0;
                                      -fx-border-radius: 0;"
                               VBox.vgrow="ALWAYS">
-                        <!-- 自定义列表项样式 -->
+                        <!-- 列表占位符：列表为空时显示的提示文本 -->
                         <placeholder>
                             <Label text="播放列表为空"
                                    style="-fx-text-fill: #888888;
@@ -200,7 +235,7 @@
                         </placeholder>
                     </ListView>
 
-                    <!-- 播放列表底部操作按钮（新增） -->
+                    <!-- 播放列表底部操作按钮（来自第二个FXML的改进） -->
                     <HBox fx:id="playlistActionBox"
                           spacing="8.0"
                           alignment="CENTER"
@@ -242,35 +277,44 @@
         </StackPane>
     </center>
 
-    <!-- 底部控制栏 -->
+    <!-- 底部控制栏：包含播放进度、时长显示和播放功能控制 -->
     <bottom>
         <VBox fx:id="bottomContainer"
               spacing="2.0"
               style="-fx-background-color: transparent;">
+            <!-- 进度条与时长显示容器：展示播放进度和当前/总时长 -->
             <HBox fx:id="progressContainer"
                   spacing="8.0"
                   alignment="CENTER_LEFT"
                   style="-fx-padding: 2 10 2 10;">
-                <Text fx:id="currentTimeLabel"
-                      text="00:00"
-                      style="-fx-fill: #ffffff;
-                             -fx-font-size: 12px;
-                             -fx-font-family: 'Microsoft YaHei';
-                             -fx-min-width: 50px;
-                             -fx-text-alignment: right;"/>
-                <Slider fx:id="progressSlider"
-                        min="0.0" max="1.0" value="0.0"
-                        HBox.hgrow="ALWAYS"
-                        minWidth="0.0"/>
-                <Text fx:id="totalTimeLabel"
-                      text="00:00"
-                      style="-fx-fill: #ffffff;
-                             -fx-font-size: 12px;
-                             -fx-font-family: 'Microsoft YaHei';
-                             -fx-min-width: 50px;
-                             -fx-text-alignment: left;"/>
+                <children>
+                    <!-- 当前播放时长显示容器 -->
+                    <HBox prefWidth="50.0" alignment="CENTER_RIGHT">
+                        <Text fx:id="currentTimeLabel" text="00:00"
+                              style="-fx-fill: #ffffff;
+                                     -fx-font-size: 12px;
+                                     -fx-font-family: 'Microsoft YaHei';
+                                     -fx-text-alignment: right;"/>
+                    </HBox>
+                    <!-- 播放进度滑块：可拖动调整播放位置 -->
+                    <Slider fx:id="progressSlider"
+                            min="0.0"
+                            max="1.0"
+                            value="0.0"
+                            HBox.hgrow="ALWAYS"
+                            minWidth="0.0"/>
+                    <!-- 媒体总时长显示容器 -->
+                    <HBox prefWidth="50.0" alignment="CENTER_LEFT">
+                        <Text fx:id="totalTimeLabel" text="00:00"
+                              style="-fx-fill: #ffffff;
+                                     -fx-font-size: 12px;
+                                     -fx-font-family: 'Microsoft YaHei';
+                                     -fx-text-alignment: left;"/>
+                    </HBox>
+                </children>
             </HBox>
 
+            <!-- 播放控制按钮容器：包含播放、切歌、倍速、音量控制 -->
             <StackPane fx:id="bottomNavi"
                        style="-fx-background-color: linear-gradient(to bottom, #555555, #444444);
                               -fx-border-color: #666666 transparent transparent transparent;
@@ -282,15 +326,15 @@
                     <Insets top="5.0" right="20.0" bottom="5.0" left="20.0"/>
                 </padding>
 
-                <!-- 快进/后退+播放暂停+上下首按钮容器 -->
+                <!-- 核心播放控制按钮组：上一首、后退、播放/暂停、快进、下一首 -->
                 <HBox fx:id="playControlBox"
                       spacing="8.0"
                       alignment="CENTER"
                       StackPane.alignment="CENTER"
                       layoutX="-40.0">
-                    <!-- 上一首按钮 -->
                     <Button fx:id="prevMediaBtn"
-                            prefWidth="40.0" prefHeight="30.0"
+                            prefWidth="40.0"
+                            prefHeight="30.0"
                             alignment="CENTER"
                             style="-fx-background-color: #363636;
                                    -fx-border-width: 0;
@@ -298,9 +342,9 @@
                                    -fx-padding: 0;
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
-                    <!-- 后退30秒按钮 -->
                     <Button fx:id="rewindBtn"
-                            prefWidth="40.0" prefHeight="30.0"
+                            prefWidth="40.0"
+                            prefHeight="30.0"
                             alignment="CENTER"
                             style="-fx-background-color: #363636;
                                    -fx-border-width: 0;
@@ -308,9 +352,9 @@
                                    -fx-padding: 0;
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
-                    <!-- 播放/暂停按钮 -->
                     <Button fx:id="playPauseBtn"
-                            prefWidth="50.0" prefHeight="30.0"
+                            prefWidth="50.0"
+                            prefHeight="30.0"
                             alignment="CENTER"
                             style="-fx-background-color: #363636;
                                    -fx-border-width: 0;
@@ -318,9 +362,9 @@
                                    -fx-padding: 0;
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
-                    <!-- 快进30秒按钮 -->
                     <Button fx:id="forwardBtn"
-                            prefWidth="40.0" prefHeight="30.0"
+                            prefWidth="40.0"
+                            prefHeight="30.0"
                             alignment="CENTER"
                             style="-fx-background-color: #363636;
                                    -fx-border-width: 0;
@@ -328,9 +372,9 @@
                                    -fx-padding: 0;
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
-                    <!-- 下一首按钮 -->
                     <Button fx:id="nextMediaBtn"
-                            prefWidth="40.0" prefHeight="30.0"
+                            prefWidth="40.0"
+                            prefHeight="30.0"
                             alignment="CENTER"
                             style="-fx-background-color: #363636;
                                    -fx-border-width: 0;
@@ -339,22 +383,24 @@
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
                 </HBox>
 
-                <!-- 倍速按钮 -->
+                <!-- 播放倍速调整按钮：点击弹出倍速选择菜单 -->
                 <Button fx:id="speedBtn"
-                        prefWidth="60.0" prefHeight="30.0"
+                        prefWidth="60.0"
+                        prefHeight="30.0"
                         alignment="CENTER"
                         StackPane.alignment="CENTER_LEFT"
                         layoutX="80.0"
                         style="-fx-background-color: #363636;
-                           -fx-text-fill: #ffffff;
-                           -fx-font-family: 'Microsoft YaHei';
-                           -fx-font-size: 13px;
-                           -fx-background-radius: 6px;
-                           -fx-cursor: hand;
-                           -fx-padding: 0 10px;
-                           -fx-border-width: 0;
-                           -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+                               -fx-text-fill: #ffffff;
+                               -fx-font-family: 'Microsoft YaHei';
+                               -fx-font-size: 13px;
+                               -fx-background-radius: 6px;
+                               -fx-cursor: hand;
+                               -fx-padding: 0 10px;
+                               -fx-border-width: 0;
+                               -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
+                <!-- 音量调节滑块容器：控制媒体播放音量大小 -->
                 <HBox alignment="CENTER_RIGHT"
                       StackPane.alignment="CENTER_RIGHT"
                       style="-fx-background-radius: 3px;"
@@ -362,7 +408,9 @@
                       maxWidth="100.0">
                     <children>
                         <Slider fx:id="volumeSlider"
-                                min="0.0" max="1.0" value="0.5"
+                                min="0.0"
+                                max="1.0"
+                                value="0.5"
                                 prefWidth="100.0"
                                 style="-fx-padding: 0 0 0 0;"/>
                     </children>
