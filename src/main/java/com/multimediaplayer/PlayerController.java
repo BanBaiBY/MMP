@@ -45,7 +45,7 @@ public class PlayerController {
     @FXML private Polygon centerPlayIcon;
     @FXML private Rectangle blackMask;
 
-    // 基础功能控件（保留倍速、快进、快退）
+    // 基础功能控件
     @FXML private Button openBtn;
     @FXML private Button playPauseBtn;
     @FXML private Button rewindBtn;   // << 后退30秒
@@ -56,7 +56,7 @@ public class PlayerController {
     @FXML private Text currentTimeLabel;
     @FXML private Text totalTimeLabel;
 
-    // 播放列表控件（适配新FXML结构）
+    // 播放列表控件
     @FXML private ListView<File> playlistView;
     @FXML private Button removeFromPlaylistBtn;
     @FXML private Button clearPlaylistBtn;
@@ -79,7 +79,7 @@ public class PlayerController {
     private boolean isDraggingProgress = false;
     private boolean isMediaEnded = false;
 
-    // 倍速相关（完全保留原有功能）
+    // 倍速相关
     private final List<Double> speedOptions = Arrays.asList(0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0);
     private double currentSpeed = 1.0;
     private ContextMenu speedMenu;
@@ -87,11 +87,11 @@ public class PlayerController {
     // 快进/后退时间（秒）
     private static final int SEEK_STEP = 30;
 
-    // 新增：防止快速切换和媒体就绪标记
+    // 防止快速切换和媒体就绪标记
     private boolean isSwitchingMedia = false;
     private boolean isMediaReady = false;
 
-    // 内置矢量图标（保留所有原有图标）
+    // 内置矢量图标
     private final Polygon playIcon;
     private final HBox pauseIcon;
     private final HBox rewindIcon;    // << 后退图标
@@ -154,7 +154,7 @@ public class PlayerController {
         initCSS();
         fileNameLabel.setText("未选择文件");
 
-        // 设置按钮图标（保留所有按钮图标）
+        // 设置按钮图标
         playPauseBtn.setGraphic(playIcon);
         rewindBtn.setGraphic(rewindIcon);
         forwardBtn.setGraphic(forwardIcon);
@@ -165,7 +165,7 @@ public class PlayerController {
         initProgressSlider();
         initSpeedButton(); // 倍速按钮初始化
 
-        // 播放列表功能初始化（升级后的逻辑）
+        // 播放列表功能初始化
         initPlaylist();
         initPlaylistToggle();
 
@@ -181,7 +181,7 @@ public class PlayerController {
             bgImage.toFront();
         });
 
-        // 按钮事件绑定（保留快进/快退/倍速事件）
+        // 按钮事件绑定
         openBtn.setOnAction(e -> openMediaFile());
         playPauseBtn.setOnAction(e -> togglePlayPause());
         rewindBtn.setOnAction(e -> seekBackward());
@@ -196,7 +196,7 @@ public class PlayerController {
             }
         });
 
-        // 搜索框监听（升级后的逻辑）
+        // 搜索框监听
         searchField.textProperty().addListener((obs, oldVal, newVal) -> {
             filteredPlaylist.setPredicate(file -> {
                 if (newVal == null || newVal.trim().isEmpty()) {
@@ -213,7 +213,7 @@ public class PlayerController {
         updateTimeDisplay(Duration.ZERO, Duration.ZERO);
     }
 
-    // 后退30秒逻辑（保留，增加isMediaReady判断）
+    // 后退30秒逻辑
     private void seekBackward() {
         if (mediaPlayer == null || !isMediaReady || mediaPlayer.getTotalDuration() == null) {
             return;
@@ -228,7 +228,7 @@ public class PlayerController {
         updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
     }
 
-    // 快进30秒逻辑（保留，增加isMediaReady判断）
+    // 快进30秒逻辑
     private void seekForward() {
         if (mediaPlayer == null || !isMediaReady || mediaPlayer.getTotalDuration() == null) {
             return;
@@ -244,7 +244,7 @@ public class PlayerController {
         updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
     }
 
-    // 倍速菜单初始化（完全保留原有功能）
+    // 倍速菜单初始化
     private void initSpeedMenu() {
         speedMenu = new ContextMenu();
         speedMenu.setStyle("-fx-background-color: #363636; -fx-text-fill: white;");
@@ -264,7 +264,7 @@ public class PlayerController {
         }
     }
 
-    // 初始化倍速按钮（完全保留原有功能）
+    // 初始化倍速按钮
     private void initSpeedButton() {
         updateSpeedButtonText();
         speedBtn.setStyle("-fx-background-color: #363636; " +
@@ -286,12 +286,12 @@ public class PlayerController {
         speedBtn.setDisable(true);
     }
 
-    // 更新倍速按钮文本（完全保留原有功能）
+    // 更新倍速按钮文本
     private void updateSpeedButtonText() {
         speedBtn.setText(String.format("%.2fx", currentSpeed));
     }
 
-    // 播放列表折叠/展开初始化方法（升级后的逻辑）
+    // 播放列表折叠/展开初始化方法
     private void initPlaylistToggle() {
         playlistContainer.setOpacity(0.0);
 
@@ -317,7 +317,7 @@ public class PlayerController {
         playlistContainer.setVisible(false);
     }
 
-    // 初始化播放列表（核心升级逻辑）
+    // 初始化播放列表
     private void initPlaylist() {
         playlistView.setItems(filteredPlaylist);
 
@@ -339,7 +339,7 @@ public class PlayerController {
             }
         });
 
-        // 升级：点击当前播放项切换播放/暂停，点击其他项播放新文件
+        // 点击当前播放项切换播放/暂停，点击其他项播放新文件
         playlistView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 1) {
                 File selectedFile = playlistView.getSelectionModel().getSelectedItem();
@@ -361,7 +361,7 @@ public class PlayerController {
         updatePlaylistCount();
     }
 
-    // 更新播放列表计数（保留）
+    // 更新播放列表计数
     private void updatePlaylistCount() {
         int totalCount = playlist.size();
         int filteredCount = filteredPlaylist.size();
@@ -373,13 +373,13 @@ public class PlayerController {
         }
     }
 
-    // 从播放列表播放指定索引的文件（核心升级逻辑，增加防快速切换和错误处理）
+    // 从播放列表播放指定索引的文件
     private void playFromPlaylist(int index) {
         if (index < 0 || index >= playlist.size()) {
             return;
         }
 
-        // 新增：防止快速切换冲突
+        // 防止快速切换冲突
         if (isSwitchingMedia) {
             return;
         }
@@ -401,6 +401,9 @@ public class PlayerController {
                 }
                 mediaPlayer = null;
             }
+
+            currentSpeed = 1.0; // 重置倍速变量为默认值
+            updateSpeedButtonText(); // 立即更新倍速按钮显示
 
             // 更新UI状态
             fileNameLabel.setText(file.getName());
@@ -427,18 +430,22 @@ public class PlayerController {
             mediaPlayer = new MediaPlayer(media);
             mediaView.setMediaPlayer(mediaPlayer);
 
-            // 设置音量和倍速
+            // 设置音量和倍速（此时currentSpeed已为1.0）
             if (volumeSlider.getValue() > 0) {
                 mediaPlayer.setVolume(volumeSlider.getValue());
             }
-            mediaPlayer.setRate(currentSpeed);
-            updateSpeedButtonText();
+            mediaPlayer.setRate(currentSpeed); // 3. 给新媒体播放器设置默认倍速
 
             // 监听媒体准备就绪
             mediaPlayer.setOnReady(() -> {
                 Platform.runLater(() -> {
                     try {
                         isMediaReady = true;
+
+                        // 就绪后再次确认倍速为1.0，防止隐性覆盖
+                        currentSpeed = 1.0;
+                        mediaPlayer.setRate(currentSpeed);
+                        updateSpeedButtonText();
 
                         // 检查媒体是否有效
                         Duration totalDuration = mediaPlayer.getTotalDuration();
@@ -526,7 +533,8 @@ public class PlayerController {
         }
     }
 
-    // 新增：媒体错误处理方法
+
+    // 媒体错误处理方法
     private void handleMediaError(File file) {
         System.err.println("媒体播放错误：" + (mediaPlayer != null && mediaPlayer.getError() != null ?
                 mediaPlayer.getError().getMessage() : "未知错误"));
@@ -562,9 +570,12 @@ public class PlayerController {
         alert.showAndWait();
     }
 
-    // 处理媒体播放结束（升级后的逻辑）
+    // 处理媒体播放结束
     private void handleMediaEnd() {
         if (isAutoPlayNext && currentPlayingIndex < playlist.size() - 1) {
+            // 自动播放前重置倍速
+            currentSpeed = 1.0;
+            updateSpeedButtonText();
             // 自动播放下一曲
             playFromPlaylist(currentPlayingIndex + 1);
         } else {
@@ -591,7 +602,7 @@ public class PlayerController {
         }
     }
 
-    // 从播放列表移除选中项（升级后的逻辑）
+    // 从播放列表移除选中项
     private void removeSelectedFromPlaylist() {
         File selectedFile = playlistView.getSelectionModel().getSelectedItem();
         if (selectedFile == null) {
@@ -643,7 +654,7 @@ public class PlayerController {
         updatePlaylistCount();
     }
 
-    // 清空播放列表（升级后的逻辑，彻底释放资源）
+    // 清空播放列表
     private void clearPlaylist() {
         // 先停止并彻底清理播放器
         if (mediaPlayer != null) {
@@ -681,7 +692,7 @@ public class PlayerController {
         updatePlaylistCount();
     }
 
-    // 打开媒体文件（升级后的逻辑，扩展文件格式支持）
+    // 打开媒体文件
     private void openMediaFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择媒体文件");
@@ -697,7 +708,11 @@ public class PlayerController {
             return;
         }
 
-        // 添加到播放列表（去重）
+        // 添加前先重置倍速
+        currentSpeed = 1.0;
+        updateSpeedButtonText();
+
+        // 添加到播放列表
         if (!playlist.contains(selectedMediaFile)) {
             playlist.add(selectedMediaFile);
             currentPlayingIndex = playlist.size() - 1;
@@ -713,7 +728,7 @@ public class PlayerController {
         playFromPlaylist(currentPlayingIndex);
     }
 
-    // 更新按钮禁用状态（保留，包含倍速/快进/快退按钮）
+    // 更新按钮禁用状态
     private void setPlaybackButtonsDisabled(boolean disabled) {
         playPauseBtn.setDisable(disabled);
         progressSlider.setDisable(disabled);
@@ -723,7 +738,7 @@ public class PlayerController {
         centerPlayIcon.setVisible(!disabled && mediaPlayer != null && isMediaReady && !isPlaying);
     }
 
-    // 切换播放/暂停（保留，增加isMediaReady判断）
+    // 切换播放/暂停
     private void togglePlayPause() {
         if (mediaPlayer == null || !isMediaReady) {
             // 如果有播放列表项，播放第一个
@@ -749,7 +764,6 @@ public class PlayerController {
         updateCenterPlayIconVisibility();
     }
 
-    // ---- 以下为通用方法，保留并少量优化 ----
     private void initCSS() {
         URL cssUrl = getClass().getClassLoader().getResource("css/player.css");
         if (cssUrl != null) {
@@ -805,7 +819,7 @@ public class PlayerController {
             if (mediaPlayer != null && isMediaReady && mediaPlayer.getTotalDuration() != null) {
                 double seekTime = progressSlider.getValue() * mediaPlayer.getTotalDuration().toSeconds();
                 double progress = progressSlider.getValue();
-                // 新增：参数有效性校验
+                // 参数有效性校验
                 if (!Double.isNaN(progress) && !Double.isInfinite(progress)) {
                     mediaPlayer.seek(Duration.seconds(seekTime));
                     updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
@@ -839,7 +853,7 @@ public class PlayerController {
     }
 
     private void updateProgressSliderStyle(double progress) {
-        // 新增：参数有效性校验
+        // 参数有效性校验
         if (Double.isNaN(progress) || Double.isInfinite(progress)) {
             progress = 0.0;
         }
@@ -940,7 +954,7 @@ public class PlayerController {
         mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
             if (!isDraggingProgress && mediaPlayer.getTotalDuration() != null && isMediaReady) {
                 double progress = newTime.toSeconds() / mediaPlayer.getTotalDuration().toSeconds();
-                // 新增：参数有效性校验
+                // 参数有效性校验
                 if (!Double.isNaN(progress) && !Double.isInfinite(progress)) {
                     progress = Math.max(0.0, Math.min(1.0, progress));
                     double finalProgress = progress;
@@ -968,12 +982,6 @@ public class PlayerController {
             }
             updateCenterPlayIconVisibility();
             updateProgressSliderStyle(0.0);
-        }
-    }
-
-    public void cleanup() {
-        if (mediaPlayer != null) {
-            mediaPlayer.dispose();
         }
     }
 }
