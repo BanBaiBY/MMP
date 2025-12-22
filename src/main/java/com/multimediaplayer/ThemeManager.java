@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.prefs.Preferences;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * 主题管理器（单例模式）
