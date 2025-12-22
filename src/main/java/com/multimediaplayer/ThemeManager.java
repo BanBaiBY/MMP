@@ -234,7 +234,7 @@ public class ThemeManager {
                 return theme;
             }
         }
-        logger.warning("【主题查询】未找到对应主题：" + displayName + "，返回当前主题");
+        logger.warning("【主题查询】未找到对应主题：" + displayName + "，返回当前主");
         System.out.println("OK");
         System.out.println("hello");
         return currentTheme;
