@@ -99,7 +99,7 @@
 
                 <!-- 主题切换下拉框容器 -->
                 <HBox alignment="CENTER" spacing="5.0">
-                    <Label text="主题："
+                    <Label text=" "
                            style="-fx-text-fill: #cccccc;
                                   -fx-font-family: 'Microsoft YaHei';
                                   -fx-font-size: 13px;"/>

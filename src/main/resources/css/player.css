@@ -141,3 +141,8 @@
     -fx-effect: innershadow(gaussian, #222222, 5, 0, 0, 2), dropshadow(gaussian, #000000, 3, 0, 0, 1); /* 内阴影+外阴影，增强立体感和层次感 */
     -fx-border-width: 1px 0 0 0; /* 顶部细边框，区分底部导航栏与主体区域 */
 }
+
+.settings-label {
+    -fx-font-family: 'Microsoft YaHei';
+    -fx-font-size: 13px;
+}

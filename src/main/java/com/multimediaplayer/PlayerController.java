@@ -746,15 +746,6 @@ public class PlayerController {
             }
             props.setProperty("playlist", playlistStr.toString());
 
-            // 上次播放信息 - 只在记忆播放时保存
-            if (isRememberLastPlay && currentPlayingIndex >= 0 && currentPlayingIndex < playlist.size()) {
-                lastPlayFilePath = playlist.get(currentPlayingIndex).getAbsolutePath();
-                lastPlaybackProgress = mediaPlayer != null && isMediaReady ?
-                        mediaPlayer.getCurrentTime().toSeconds() : 0.0;
-            } else {
-                lastPlayFilePath = "";
-                lastPlaybackProgress = 0.0;
-            }
 
             props.setProperty("lastPlayFilePath", lastPlayFilePath);
             props.setProperty("lastPlaybackProgress", String.valueOf(lastPlaybackProgress));
@@ -827,7 +818,7 @@ public class PlayerController {
         }
     }
 
-    // ==================== 设置对话框功能（来自第二个代码，适配第一个代码的主题管理器）====================
+    // ==================== 设置对话框功能（适配主题系统）====================
     private void openSettingsDialog() {
         Dialog<Void> settingsDialog = new Dialog<>();
         settingsDialog.setTitle("播放器设置");
@@ -835,48 +826,122 @@ public class PlayerController {
         settingsDialog.initOwner(rootPane.getScene().getWindow());
 
         DialogPane dialogPane = settingsDialog.getDialogPane();
-        dialogPane.setStyle("-fx-background-color: #222222; -fx-text-fill: #ffffff;");
+
+        // 根据当前主题设置对话框样式
+        ThemeManager.Theme currentTheme = themeManager.getCurrentTheme();
+        String dialogBgColor = currentTheme == ThemeManager.Theme.DARK ? "#222222" : "#f5f5f5";
+        String dialogTextColor = currentTheme == ThemeManager.Theme.DARK ? "#ffffff" : "#333333";
+        String controlBgColor = currentTheme == ThemeManager.Theme.DARK ? "#363636" : "#e0e0e0";
+        String selectionColor = currentTheme == ThemeManager.Theme.DARK ? "#505050" : "#d0d0d0";
+        String promptColor = currentTheme == ThemeManager.Theme.DARK ? "#999999" : "#666666";
+
+        dialogPane.setStyle(String.format(
+                "-fx-background-color: %s; -fx-text-fill: %s;",
+                dialogBgColor, dialogTextColor
+        ));
         dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         VBox settingsContent = new VBox(15);
         settingsContent.setPadding(new Insets(15));
-        settingsContent.setStyle("-fx-background-color: #222222;");
+        settingsContent.setStyle(String.format("-fx-background-color: %s;", dialogBgColor));
 
         // 1. 自动播放下一首开关
         CheckBox autoPlayNextCheckBox = new CheckBox("播放结束自动播放下一首");
-        autoPlayNextCheckBox.setStyle("-fx-text-fill: #ffffff; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;");
+        autoPlayNextCheckBox.setStyle(String.format(
+                "-fx-text-fill: %s; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;",
+                dialogTextColor
+        ));
         autoPlayNextCheckBox.setSelected(isAutoPlayNext);
 
-        // 2. 记忆上次内容开关
+        // 2. 记忆上次内容开关（重新添加，因为在您的代码中缺少这个）
         CheckBox rememberLastPlayCheckBox = new CheckBox("记忆上次播放内容（列表+播放进度）");
-        rememberLastPlayCheckBox.setStyle("-fx-text-fill: #ffffff; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;");
+        rememberLastPlayCheckBox.setStyle(String.format(
+                "-fx-text-fill: %s; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;",
+                dialogTextColor
+        ));
         rememberLastPlayCheckBox.setSelected(isRememberLastPlay);
 
         // 3. 默认音量设置
         Label volumeLabel = new Label("默认音量：");
-        volumeLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;");
+        volumeLabel.setStyle(String.format(
+                "-fx-text-fill: %s; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;",
+                dialogTextColor
+        ));
         Slider defaultVolumeSlider = new Slider(0.0, 1.0, volumeSlider.getValue());
         defaultVolumeSlider.setPrefWidth(150);
+        defaultVolumeSlider.setStyle(String.format(
+                "-fx-background-color: %s;",
+                dialogBgColor
+        ));
         HBox volumeBox = new HBox(10, volumeLabel, defaultVolumeSlider);
         volumeBox.setAlignment(Pos.CENTER_LEFT);
 
         // 4. 主题选择（使用第一个代码的ThemeManager）
         Label themeLabel = new Label("播放器主题：");
-        themeLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;");
+        themeLabel.setStyle(String.format(
+                "-fx-text-fill: %s; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;",
+                dialogTextColor
+        ));
 
         ComboBox<String> themeSettingsComboBox = new ComboBox<>();
         themeSettingsComboBox.getItems().addAll(themeManager.getThemeDisplayNames());
         themeSettingsComboBox.setValue(themeManager.getCurrentTheme().getDisplayName());
-        themeSettingsComboBox.setStyle(
-                "-fx-background-color: #363636; " +
-                        "-fx-text-fill: #ffffff; " +
-                        "-fx-prompt-text-fill: #999999; " +
+
+        // 为下拉框设置样式
+        themeSettingsComboBox.setStyle(String.format(
+                "-fx-background-color: %s; " +
+                        "-fx-text-fill: %s; " +
+                        "-fx-prompt-text-fill: %s; " +
                         "-fx-font-size: 12px; " +
                         "-fx-pref-width: 120px; " +
-                        "-fx-control-inner-background: #363636; " +
-                        "-fx-selection-bar: #505050; " +
-                        "-fx-selection-bar-text: #ffffff;"
-        );
+                        "-fx-control-inner-background: %s; " +
+                        "-fx-selection-bar: %s; " +
+                        "-fx-selection-bar-text: %s;",
+                controlBgColor, dialogTextColor, promptColor,
+                controlBgColor, selectionColor, dialogTextColor
+        ));
+
+        // 设置下拉框单元格样式
+        themeSettingsComboBox.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(item);
+                    setStyle(String.format(
+                            "-fx-text-fill: %s; " +
+                                    "-fx-background-color: %s; " +
+                                    "-fx-font-family: 'Microsoft YaHei'; " +
+                                    "-fx-font-size: 12px; " +
+                                    "-fx-padding: 5px 10px;",
+                            dialogTextColor, controlBgColor
+                    ));
+                }
+            }
+        });
+
+        // 设置按钮单元格样式
+        themeSettingsComboBox.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setStyle(String.format(
+                            "-fx-text-fill: %s; " +
+                                    "-fx-background-color: %s; " +
+                                    "-fx-font-family: 'Microsoft YaHei'; " +
+                                    "-fx-font-size: 12px;",
+                            dialogTextColor, controlBgColor
+                    ));
+                }
+            }
+        });
 
         HBox themeBox = new HBox(10, themeLabel, themeSettingsComboBox);
         themeBox.setAlignment(Pos.CENTER_LEFT);
@@ -884,7 +949,7 @@ public class PlayerController {
         // 添加所有设置项
         settingsContent.getChildren().addAll(
                 autoPlayNextCheckBox,
-                rememberLastPlayCheckBox,
+                rememberLastPlayCheckBox, // 重新添加这个
                 volumeBox,
                 themeBox
         );
@@ -895,12 +960,13 @@ public class PlayerController {
             if (buttonType == ButtonType.OK) {
                 // 保存设置
                 isAutoPlayNext = autoPlayNextCheckBox.isSelected();
+                isRememberLastPlay = rememberLastPlayCheckBox.isSelected(); // 保存这个设置
+
                 double newVolume = defaultVolumeSlider.getValue();
                 volumeSlider.setValue(newVolume);
                 if (mediaPlayer != null && isMediaReady) {
                     mediaPlayer.setVolume(newVolume);
                 }
-                isRememberLastPlay = rememberLastPlayCheckBox.isSelected();
 
                 // 保存主题选择
                 String selectedThemeName = themeSettingsComboBox.getValue();
@@ -1714,10 +1780,6 @@ public class PlayerController {
                 // 实时更新进度条样式
                 updateProgressSliderStyle(finalProgress);
 
-                // 只在记忆播放时更新进度
-                if (isRememberLastPlay) {
-                    updateLastPlayProgress();
-                }
             }
         });
     }

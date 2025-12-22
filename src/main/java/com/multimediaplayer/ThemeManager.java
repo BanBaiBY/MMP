@@ -124,6 +124,7 @@ public class ThemeManager {
         // 先移除所有旧的主题CSS文件，避免样式冲突
         removeAllThemeCss(scene);
         // 添加新主题的CSS文件，添加成功后更新当前主题并保存
+
         if (addThemeCss(newTheme, scene)) {
             currentTheme = newTheme;
             saveCurrentTheme();

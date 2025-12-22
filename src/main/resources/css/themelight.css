@@ -204,3 +204,7 @@
     -fx-background-color: #1E90FF !important; /* 皇家蓝主色，替换默认蓝色，保证主题统一性 */
     -fx-text-fill: white !important; /* 白色文字，提高对比度，增强可读性 */
 }
+
+.settings-label {
+    -fx-text-fill: #333333;
+}

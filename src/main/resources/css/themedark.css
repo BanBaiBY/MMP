@@ -227,3 +227,7 @@
     -fx-background-color: #FF6347 !important;
     -fx-text-fill: #ffffff !important;
 }
+
+.settings-label {
+    -fx-text-fill: #ffffff;
+}
