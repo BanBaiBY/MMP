@@ -1,66 +1,206 @@
-/* 浅色主题 - 适配现有UI风格 */
+/* 多媒体播放器 - 浅色主题样式表
+   整体风格：清新浅色系底色，皇家蓝主色调，适配日间使用场景
+   包含：全局样式、布局组件、功能控件、特殊菜单等完整样式定义 */
+
+/* 全局根节点样式：定义主题基础底色和文字查找颜色 */
 .root {
     -fx-background-color: #f5f5f5;
+    -fx-text-background-color: #333333; /* 定义深灰查找颜色，供子控件统一引用 */
+    -fx-text-fill: -fx-text-background-color; /* 统一全局文本颜色，保证风格一致性 */
 }
 
-/* 顶部导航栏 */
+/* 顶部导航栏：渐变浅灰背景，增强视觉层次感，与整体浅色风格适配 */
 #topNavi {
     -fx-background-color: linear-gradient(to right, #e0e0e0, #f0f0f0) !important;
-    -fx-border-color: #cccccc !important;
+    -fx-border-color: #cccccc !important; /* 浅灰边框，区分导航栏与主体区域 */
 }
 
-/* 底部导航栏 */
+/* 底部导航栏：渐变浅灰背景，与顶部导航栏视觉风格统一，形成上下呼应 */
 #bottomNavi {
     -fx-background-color: linear-gradient(to bottom, #f0f0f0, #e0e0e0) !important;
-    -fx-border-color: #dddddd !important;
+    -fx-border-color: #dddddd !important; /* 浅灰边框，提升布局层次感 */
 }
 
-/* 按钮样式 */
+/* 播放列表展开/折叠切换按钮：专属样式，匹配浅色主题清新风格 */
+#playlistToggleBtn {
+    -fx-background-color: #e0e0e0 !important; /* 浅灰背景，与下拉框视觉风格统一 */
+    -fx-text-fill: #333333 !important; /* 深灰文字，保证日间场景可读性 */
+    -fx-font-size: 16px !important;
+    -fx-pref-width: 40px !important;
+    -fx-pref-height: 30px !important;
+    -fx-background-radius: 6px !important; /* 统一圆角风格，与其他按钮保持一致 */
+    -fx-cursor: hand !important;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 1, 0, 0, 1) !important; /* 轻微阴影，增强立体感 */
+}
+
+/* 播放列表切换按钮悬浮状态：突出主色调，提供清晰交互反馈 */
+#playlistToggleBtn:hover {
+    -fx-background-color: #1E90FF !important; /* 皇家蓝主色，形成视觉焦点，增强交互感知 */
+    -fx-text-fill: #ffffff !important; /* 白色文字，提高对比度，保证可读性 */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 1, 0, 0, 1) !important; /* 加深阴影，提升层次感 */
+}
+
+/* 通用按钮样式：统一功能按钮视觉风格，突出交互入口 */
 .button {
-    -fx-background-color: #1E90FF !important;
-    -fx-text-fill: white !important;
-}
-.button:hover {
-    -fx-background-color: #4169E1 !important;
+    -fx-background-color: #1E90FF !important; /* 皇家蓝主色，清晰标识功能按钮 */
+    -fx-text-fill: #ffffff !important; /* 白色文字，保证按钮文字可读性 */
 }
 
-/* 主题下拉框 */
+/* 通用按钮悬浮状态：加深色调，强化交互反馈，提升用户体验 */
+.button:hover {
+    -fx-background-color: #4169E1 !important; /* 深蓝色调，突出悬浮状态，明确交互意图 */
+}
+
+/* 播放列表容器：半透明白色背景，兼顾遮罩效果与内容可读性 */
+#playlistContainer {
+    -fx-background-color: rgba(255, 255, 255, 0.95) !important;
+    -fx-border-color: rgba(204, 204, 204, 0.9) !important; /* 浅灰边框，清晰区分列表边界 */
+}
+
+/* 播放列表单元格：透明背景，深灰文字，适配浅色主题整体风格 */
+#playlistView .list-cell {
+    -fx-background-color: transparent !important;
+    -fx-text-fill: #333333 !important; /* 深灰色文字，保证日间舒适阅读体验 */
+}
+
+/* 播放列表单元格悬浮状态：浅灰背景，加深文字，突出选择意图 */
+#playlistView .list-cell:filled:hover {
+    -fx-background-color: rgba(224, 224, 224, 0.8) !important;
+    -fx-text-fill: #000000 !important; /* 黑色文字，提高对比度，增强可读性 */
+}
+
+/* 播放列表单元格选中状态：主色调背景，明确当前播放项，强化视觉提示 */
+#playlistView .list-cell:filled:selected {
+    -fx-background-color: #1E90FF !important; /* 皇家蓝主色，突出选中项，标识当前播放媒体 */
+    -fx-text-fill: #ffffff !important; /* 白色文字，保证高对比度，提升可读性 */
+}
+
+/* 播放列表占位符：灰色文字，提示列表为空状态，弱化次要信息 */
+#playlistView .placeholder .label {
+    -fx-text-fill: #666666 !important;
+}
+
+/* 下拉框（主题选择）：浅灰背景，深灰文字，与浅色主题风格统一 */
 .combo-box {
     -fx-background-color: #e0e0e0 !important;
     -fx-text-fill: #333333 !important;
 }
+
+/* 下拉框列表单元格：与下拉框主体风格保持一致，保证视觉统一性 */
 .combo-box .list-cell {
-    -fx-background-color: #f5f5f5;
-    -fx-text-fill: #333333;
-}
-.combo-box .list-cell:hover {
-    -fx-background-color: #1E90FF;
-    -fx-text-fill: white;
+    -fx-background-color: #e0e0e0 !important;
+    -fx-text-fill: #333333 !important;
 }
 
-/* 标签文字 */
+/* 下拉框弹出列表容器：浅灰背景，区分主体与弹出层，提升布局层次感 */
+.combo-box-popup .list-view {
+    -fx-background-color: #f5f5f5 !important;
+}
+
+/* 下拉框弹出列表单元格：深灰文字，保证日间场景下的可读性 */
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #f5f5f5 !important;
+    -fx-text-fill: #333333 !important;
+}
+
+/* 下拉框弹出列表单元格悬浮状态：主色调背景，突出选择意图，提供交互反馈 */
+.combo-box-popup .list-view .list-cell:hover:filled {
+    -fx-background-color: #1E90FF !important;
+    -fx-text-fill: #ffffff !important; /* 白色文字，保证高对比度，提升可读性 */
+}
+
+/* 通用标签：深灰文字，适配浅色主题整体风格，保证舒适阅读体验 */
 .label {
     -fx-text-fill: #333333 !important;
 }
+
+/* 当前播放文件名标签：主色调文字，突出显示播放信息，强化视觉焦点 */
 #fileNameLabel {
     -fx-text-fill: #1E90FF !important;
 }
 
-/* 时长文字 */
+/* 播放列表数量统计标签：灰色文字，弱化次要信息，保证界面视觉平衡 */
+#playlistCountLabel {
+    -fx-text-fill: #666666 !important;
+}
+
+/* 通用文本：深灰填充，保证浅色背景下的可读性与风格统一性 */
 .text {
     -fx-fill: #333333 !important;
 }
 
-/* 进度条轨道 */
-.slider .track {
-    -fx-background-color: #e0e0e0;
-}
-/* 进度条滑块 */
-.slider .thumb {
-    -fx-background-color: #1E90FF;
+/* 进度条轨道：浅灰背景，定义进度条基础样式，与整体风格适配 */
+#progressSlider .track {
+    -fx-background-color: #e0e0e0 !important;
 }
 
-/* 播放容器 */
+/* 进度条滑块：主色调背景，明确当前播放进度，强化视觉提示 */
+#progressSlider .thumb {
+    -fx-background-color: #1E90FF !important;
+    -fx-border-color: #cccccc !important; /* 浅灰边框，增强滑块立体感 */
+}
+
+/* 进度条滑块悬浮状态：加深色调，提升交互反馈，明确调节意图 */
+#progressSlider .thumb:hover {
+    -fx-background-color: #4169E1 !important;
+}
+
+/* 音量滑块轨道：浅灰背景，与进度条风格统一，保证界面视觉一致性 */
+#volumeSlider .track {
+    -fx-background-color: #e0e0e0 !important;
+}
+
+/* 音量滑块：深灰背景，便于识别音量调节位置，提升交互便捷性 */
+#volumeSlider .thumb {
+    -fx-background-color: #333333 !important;
+}
+
+/* 音量滑块悬浮状态：主色调背景，提供清晰交互反馈，强化调节感知 */
+#volumeSlider .thumb:hover {
+    -fx-background-color: #1E90FF !important;
+}
+
+/* 媒体播放容器：白色背景，优化视频/音频播放视觉效果，适配浅色场景 */
 #mediaContainer {
     -fx-background-color: #ffffff !important;
+}
+
+/* 进度条轨道兜底样式：与Java代码逻辑联动，保证样式一致性，避免显示异常 */
+#progressSlider .track {
+    -fx-background-color: #e0e0e0 !important;
+    -fx-background-radius: 0 !important;
+    -fx-padding: 4px !important; /* 定义轨道高度，匹配滑块尺寸，保证布局协调 */
+}
+
+/* 进度条滑块兜底样式：精准控制滑块尺寸与样式，确保与轨道适配 */
+#progressSlider .thumb {
+    -fx-background-color: #1E90FF !important;
+    -fx-border-color: #cccccc !important;
+    -fx-pref-width: 8px !important;
+    -fx-pref-height: 16px !important;
+}
+
+/* 浅色主题倍速菜单：专属样式，保证与浅色主题整体风格统一 */
+/* 倍速菜单容器：浅灰背景，浅灰边框，增强层次感，适配日间场景 */
+.context-menu.speed-menu-light {
+    -fx-background-color: #f5f5f5 !important;
+    -fx-border-color: #cccccc !important; /* 浅灰边框，清晰区分菜单边界 */
+    -fx-border-radius: 4px !important;
+    -fx-padding: 2px 0 !important;
+}
+
+/* 倍速菜单项（专属样式）：统一字体样式，透明背景，保证基础可读性 */
+.context-menu.speed-menu-light .menu-item.speed-menu-item {
+    -fx-text-fill: #333333 !important; /* 深灰文字，适配浅色背景 */
+    -fx-font-family: 'Microsoft YaHei' !important; /* 统一字体，优化显示效果 */
+    -fx-font-size: 12px !important;
+    -fx-padding: 5px 15px !important;
+    -fx-background-color: transparent !important;
+    -fx-background-radius: 2px !important;
+}
+
+/* 倍速菜单项悬浮状态：主色调背景，白色文字，突出选择意图，提供交互反馈 */
+.context-menu.speed-menu-light .menu-item.speed-menu-item:hover {
+    -fx-background-color: #1E90FF !important; /* 皇家蓝主色，替换默认蓝色，保证主题统一性 */
+    -fx-text-fill: white !important; /* 白色文字，提高对比度，增强可读性 */
 }

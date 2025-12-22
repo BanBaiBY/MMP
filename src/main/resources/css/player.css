@@ -1,47 +1,143 @@
-/* 进度条轨道基础样式 */
+/* 多媒体播放器 - 通用基础样式表
+   作用：定义各类控件的统一基础样式、布局规范和交互效果，不涉及主题色调，适配深浅两种主题
+   包含：滑块、按钮、列表、下拉框、标签、容器等通用样式定义 */
+
+/* 进度条（播放进度）- 轨道基础样式 */
 #progressSlider .track {
-    -fx-background-color: #444444;
-    -fx-background-radius: 0;
-    -fx-padding: 4px; /* 轨道高度，需和滑块高度匹配 */
+    -fx-background-radius: 0; /* 直角样式，与整体简约风格适配 */
+    -fx-padding: 4px; /* 定义轨道高度，需与滑块高度匹配，保证布局协调 */
 }
 
-/* 滑块样式 */
+/* 进度条（播放进度）- 滑块基础样式 */
 #progressSlider .thumb {
-    -fx-background-color: white;
-    -fx-background-radius: 0;
-    -fx-pref-width: 8px;
-    -fx-pref-height: 16px;
-    -fx-border-color: #333333;
-    -fx-border-width: 1px;
-    -fx-effect: dropshadow(gaussian, #000000, 1, 0, 0, 0);
+    -fx-background-radius: 0; /* 直角滑块，与轨道风格统一 */
+    -fx-pref-width: 8px; /* 滑块宽度 */
+    -fx-pref-height: 16px; /* 滑块高度，与轨道padding适配 */
+    -fx-border-width: 1px; /* 细边框，增强滑块立体感 */
+    -fx-effect: dropshadow(gaussian, #000000, 1, 0, 0, 0); /* 轻微阴影，提升视觉层次感 */
 }
 
-/* 滑块悬浮样式 */
+/* 进度条（播放进度）- 滑块悬浮样式：提供交互反馈，明确可操作状态 */
 #progressSlider .thumb:hover {
-    -fx-background-color: #1E90FF;
-    -fx-cursor: hand;
+    -fx-cursor: hand; /* 鼠标变为手型，提示可拖动调节 */
 }
 
-/* 音量滑块样式 */
+/* 音量滑块 - 轨道基础样式 */
 #volumeSlider .track {
-    -fx-background-color: #444444;
-    -fx-background-radius: 2px;
-    -fx-padding: 2px;
-}
-#volumeSlider .thumb {
-    -fx-background-color: white;
-    -fx-background-radius: 50%;
-    -fx-pref-width: 12px;
-    -fx-pref-height: 12px;
-}
-#volumeSlider .thumb:hover {
-    -fx-background-color: #1E90FF;
+    -fx-background-radius: 2px; /* 圆角样式，区分于播放进度条，增强辨识度 */
+    -fx-padding: 2px; /* 定义轨道高度，与圆形滑块尺寸适配 */
 }
 
-/* 按钮悬浮样式 */
-#playPauseBtn:hover {
-    -fx-background-color: #464646;
+/* 音量滑块 - 滑块基础样式：圆形设计，便于识别音量调节控件 */
+#volumeSlider .thumb {
+    -fx-background-radius: 50%; /* 圆形滑块，突出音量调节控件特征 */
+    -fx-pref-width: 12px; /* 滑块直径 */
+    -fx-pref-height: 12px; /* 滑块直径，保证圆形比例 */
 }
-#openBtn:hover {
-    -fx-background-color: #414141;
+
+/* 通用按钮样式：统一所有功能按钮的视觉风格和交互属性 */
+.button {
+    -fx-font-family: 'Microsoft YaHei'; /* 统一字体，保证界面文字风格一致 */
+    -fx-font-size: 13px; /* 统一字体大小，提升可读性 */
+    -fx-background-radius: 6px; /* 圆角样式，优化视觉体验 */
+    -fx-cursor: hand; /* 鼠标手型，提示可点击 */
+    -fx-border-width: 0; /* 去除默认边框，简化样式 */
+    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1); /* 轻微阴影，增强按钮立体感 */
+}
+
+/* 播放列表 - 通用布局样式：优化列表显示效果，去除默认冗余样式 */
+#playlistView {
+    -fx-background-color: transparent; /* 透明背景，适配主题底色 */
+    -fx-control-inner-background: transparent; /* 内部控件透明背景，保持风格统一 */
+    -fx-background-insets: 0; /* 去除默认内边距，优化布局 */
+    -fx-padding: 0; /* 去除内边距，紧凑布局 */
+    -fx-border-width: 0; /* 去除默认边框，简化样式 */
+    -fx-cell-hover-color: rgba(51, 51, 51, 0.6); /* 单元格悬浮背景色，提供交互反馈 */
+    -fx-cell-focus-inner-border: transparent; /* 去除聚焦内边框，简化样式 */
+    -fx-focus-color: transparent; /* 去除聚焦高亮色，避免干扰视觉 */
+    -fx-faint-focus-color: transparent; /* 去除淡聚焦色，保持界面简洁 */
+    -fx-border-color: transparent; /* 透明边框，适配整体风格 */
+    -fx-border-insets: 0; /* 去除边框内边距，优化布局 */
+    -fx-background-radius: 0; /* 直角样式，保持简约风格 */
+    -fx-border-radius: 0; /* 直角边框，与背景风格统一 */
+}
+
+/* 播放列表 - 列表单元格样式：统一单元格布局和文字显示效果 */
+#playlistView .list-cell {
+    -fx-padding: 8px 10px; /* 内边距，保证文字与边界间距适中 */
+    -fx-font-family: 'Microsoft YaHei'; /* 统一字体，与界面风格保持一致 */
+    -fx-font-size: 13px; /* 统一字体大小，提升可读性 */
+    -fx-wrap-text: false; /* 禁止文字换行，保持列表整洁 */
+    -fx-text-overrun: ellipsis; /* 文字超出时显示省略号，优化长文件名显示效果 */
+}
+
+/* 下拉框（ComboBox）- 通用样式：统一下拉框视觉风格和交互属性 */
+.combo-box {
+    -fx-font-family: 'Microsoft YaHei'; /* 统一字体，保证界面文字风格一致 */
+    -fx-font-size: 13px; /* 统一字体大小，提升可读性 */
+    -fx-background-radius: 6px; /* 圆角样式，与按钮风格统一 */
+    -fx-border-width: 0; /* 去除默认边框，简化样式 */
+    -fx-cursor: hand; /* 鼠标手型，提示可点击展开 */
+    -fx-padding: 0 5px; /* 内边距，保证文字与边界间距适中 */
+}
+
+/* 下拉框 - 弹出列表容器样式：增强视觉层次感，区分于主体 */
+.combo-box-popup .list-view {
+    -fx-background-radius: 6px; /* 圆角样式，与下拉框主体风格统一 */
+    -fx-effect: dropshadow(gaussian, #000000, 5, 0, 0, 2); /* 阴影效果，增强弹出层立体感 */
+}
+
+/* 下拉框 - 弹出列表单元格样式：统一布局和文字显示效果 */
+.combo-box-popup .list-view .list-cell {
+    -fx-padding: 8px 10px; /* 内边距，保证文字与边界间距适中 */
+    -fx-font-family: 'Microsoft YaHei'; /* 统一字体，与界面风格保持一致 */
+    -fx-font-size: 13px; /* 统一字体大小，提升可读性 */
+}
+
+/* 通用标签样式：统一所有标签的字体规范 */
+.label {
+    -fx-font-family: 'Microsoft YaHei'; /* 统一字体，保证界面文字风格一致 */
+    -fx-font-size: 13px; /* 统一字体大小，提升可读性 */
+}
+
+/* 当前播放文件名标签：优化长文件名显示效果，调整内边距 */
+#fileNameLabel {
+    -fx-text-overrun: ellipsis; /* 文字超出时显示省略号，避免文字溢出 */
+    -fx-padding: 0 10px; /* 左右内边距，保证文字与边界间距适中 */
+}
+
+/* 通用文本样式：统一所有文本控件的字体规范 */
+.text {
+    -fx-font-size: 12px; /* 统一字体大小，适配次要文本显示 */
+    -fx-font-family: 'Microsoft YaHei'; /* 统一字体，保证界面文字风格一致 */
+}
+
+/* 容器通用样式 - 媒体播放容器：优化布局适配，避免默认尺寸限制 */
+#mediaContainer {
+    -fx-min-width: 0; /* 取消最小宽度限制，适配窗口缩放 */
+    -fx-min-height: 0; /* 取消最小高度限制，适配窗口缩放 */
+}
+
+/* 容器通用样式 - 播放列表容器：定义固定宽度和视觉效果 */
+#playlistContainer {
+    -fx-min-width: 0; /* 取消最小宽度限制，适配折叠/展开状态 */
+    -fx-max-width: 280.0; /* 最大宽度限制，保证列表布局整洁 */
+    -fx-effect: dropshadow(gaussian, #000000, 10, 0, 0, 3); /* 明显阴影效果，增强列表层次感 */
+}
+
+/* 容器通用样式 - 顶部导航栏：定义高度、圆角和视觉效果 */
+#topNavi {
+    -fx-pref-height: 40.0; /* 固定首选高度，保证界面布局稳定 */
+    -fx-min-height: 40.0; /* 固定最小高度，避免缩放时变形 */
+    -fx-background-radius: 0 0 8px 8px; /* 底部圆角样式，优化视觉体验 */
+    -fx-effect: dropshadow(gaussian, #000000, 5, 0, 0, 2); /* 阴影效果，增强导航栏立体感 */
+    -fx-border-width: 0 0 1px 0; /* 底部细边框，区分导航栏与主体区域 */
+}
+
+/* 容器通用样式 - 底部导航栏：定义高度、阴影和边框样式 */
+#bottomNavi {
+    -fx-pref-height: 40.0; /* 固定首选高度，与顶部导航栏呼应，保证布局对称 */
+    -fx-min-height: 40.0; /* 固定最小高度，避免缩放时变形 */
+    -fx-effect: innershadow(gaussian, #222222, 5, 0, 0, 2), dropshadow(gaussian, #000000, 3, 0, 0, 1); /* 内阴影+外阴影，增强立体感和层次感 */
+    -fx-border-width: 1px 0 0 0; /* 顶部细边框，区分底部导航栏与主体区域 */
 }
