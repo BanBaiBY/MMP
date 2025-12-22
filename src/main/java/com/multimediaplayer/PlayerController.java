@@ -45,7 +45,7 @@ public class PlayerController {
     @FXML private Polygon centerPlayIcon;
     @FXML private Rectangle blackMask;
 
-    // 基础功能控件
+    // 基础功能控件（保留倍速、快进、快退）
     @FXML private Button openBtn;
     @FXML private Button playPauseBtn;
     @FXML private Button rewindBtn;   // << 后退30秒
@@ -79,7 +79,7 @@ public class PlayerController {
     private boolean isDraggingProgress = false;
     private boolean isMediaEnded = false;
 
-    // 倍速相关
+    // 倍速相关（完全保留原有功能）
     private final List<Double> speedOptions = Arrays.asList(0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0);
     private double currentSpeed = 1.0;
     private ContextMenu speedMenu;
@@ -87,7 +87,11 @@ public class PlayerController {
     // 快进/后退时间（秒）
     private static final int SEEK_STEP = 30;
 
-    // 内置矢量图标
+    // 新增：防止快速切换和媒体就绪标记
+    private boolean isSwitchingMedia = false;
+    private boolean isMediaReady = false;
+
+    // 内置矢量图标（保留所有原有图标）
     private final Polygon playIcon;
     private final HBox pauseIcon;
     private final HBox rewindIcon;    // << 后退图标
@@ -150,7 +154,7 @@ public class PlayerController {
         initCSS();
         fileNameLabel.setText("未选择文件");
 
-        // 设置按钮图标
+        // 设置按钮图标（保留所有按钮图标）
         playPauseBtn.setGraphic(playIcon);
         rewindBtn.setGraphic(rewindIcon);
         forwardBtn.setGraphic(forwardIcon);
@@ -161,7 +165,7 @@ public class PlayerController {
         initProgressSlider();
         initSpeedButton(); // 倍速按钮初始化
 
-        // 播放列表功能初始化
+        // 播放列表功能初始化（升级后的逻辑）
         initPlaylist();
         initPlaylistToggle();
 
@@ -177,7 +181,7 @@ public class PlayerController {
             bgImage.toFront();
         });
 
-        // 按钮事件绑定（整合所有功能）
+        // 按钮事件绑定（保留快进/快退/倍速事件）
         openBtn.setOnAction(e -> openMediaFile());
         playPauseBtn.setOnAction(e -> togglePlayPause());
         rewindBtn.setOnAction(e -> seekBackward());
@@ -187,12 +191,12 @@ public class PlayerController {
 
         // 音量绑定
         volumeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (mediaPlayer != null) {
+            if (mediaPlayer != null && isMediaReady) {
                 mediaPlayer.setVolume(newVal.doubleValue());
             }
         });
 
-        // 搜索框监听
+        // 搜索框监听（升级后的逻辑）
         searchField.textProperty().addListener((obs, oldVal, newVal) -> {
             filteredPlaylist.setPredicate(file -> {
                 if (newVal == null || newVal.trim().isEmpty()) {
@@ -209,9 +213,9 @@ public class PlayerController {
         updateTimeDisplay(Duration.ZERO, Duration.ZERO);
     }
 
-    // 后退30秒逻辑
+    // 后退30秒逻辑（保留，增加isMediaReady判断）
     private void seekBackward() {
-        if (mediaPlayer == null || mediaPlayer.getTotalDuration() == null) {
+        if (mediaPlayer == null || !isMediaReady || mediaPlayer.getTotalDuration() == null) {
             return;
         }
 
@@ -224,9 +228,9 @@ public class PlayerController {
         updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
     }
 
-    // 快进30秒逻辑
+    // 快进30秒逻辑（保留，增加isMediaReady判断）
     private void seekForward() {
-        if (mediaPlayer == null || mediaPlayer.getTotalDuration() == null) {
+        if (mediaPlayer == null || !isMediaReady || mediaPlayer.getTotalDuration() == null) {
             return;
         }
 
@@ -240,7 +244,7 @@ public class PlayerController {
         updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
     }
 
-    // 倍速菜单初始化
+    // 倍速菜单初始化（完全保留原有功能）
     private void initSpeedMenu() {
         speedMenu = new ContextMenu();
         speedMenu.setStyle("-fx-background-color: #363636; -fx-text-fill: white;");
@@ -252,7 +256,7 @@ public class PlayerController {
             item.setOnAction(e -> {
                 currentSpeed = speed;
                 updateSpeedButtonText();
-                if (mediaPlayer != null) {
+                if (mediaPlayer != null && isMediaReady) {
                     mediaPlayer.setRate(currentSpeed);
                 }
             });
@@ -260,7 +264,7 @@ public class PlayerController {
         }
     }
 
-    // 初始化倍速按钮
+    // 初始化倍速按钮（完全保留原有功能）
     private void initSpeedButton() {
         updateSpeedButtonText();
         speedBtn.setStyle("-fx-background-color: #363636; " +
@@ -282,12 +286,12 @@ public class PlayerController {
         speedBtn.setDisable(true);
     }
 
-    // 更新倍速按钮文本
+    // 更新倍速按钮文本（完全保留原有功能）
     private void updateSpeedButtonText() {
         speedBtn.setText(String.format("%.2fx", currentSpeed));
     }
 
-    // 播放列表折叠/展开初始化方法
+    // 播放列表折叠/展开初始化方法（升级后的逻辑）
     private void initPlaylistToggle() {
         playlistContainer.setOpacity(0.0);
 
@@ -313,7 +317,7 @@ public class PlayerController {
         playlistContainer.setVisible(false);
     }
 
-    // 初始化播放列表
+    // 初始化播放列表（核心升级逻辑）
     private void initPlaylist() {
         playlistView.setItems(filteredPlaylist);
 
@@ -335,12 +339,17 @@ public class PlayerController {
             }
         });
 
+        // 升级：点击当前播放项切换播放/暂停，点击其他项播放新文件
         playlistView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 1) {
                 File selectedFile = playlistView.getSelectionModel().getSelectedItem();
                 if (selectedFile != null) {
                     int originalIndex = playlist.indexOf(selectedFile);
-                    playFromPlaylist(originalIndex);
+                    if (originalIndex == currentPlayingIndex && mediaPlayer != null && isMediaReady) {
+                        togglePlayPause();
+                    } else {
+                        playFromPlaylist(originalIndex);
+                    }
                 }
             }
         });
@@ -352,7 +361,7 @@ public class PlayerController {
         updatePlaylistCount();
     }
 
-    // 更新播放列表计数
+    // 更新播放列表计数（保留）
     private void updatePlaylistCount() {
         int totalCount = playlist.size();
         int filteredCount = filteredPlaylist.size();
@@ -364,94 +373,196 @@ public class PlayerController {
         }
     }
 
-    // 从播放列表播放指定索引的文件
+    // 从播放列表播放指定索引的文件（核心升级逻辑，增加防快速切换和错误处理）
     private void playFromPlaylist(int index) {
         if (index < 0 || index >= playlist.size()) {
             return;
         }
 
-        File file = playlist.get(index);
-        currentPlayingIndex = index;
-
-        if (mediaPlayer != null) {
-            mediaPlayer.dispose();
+        // 新增：防止快速切换冲突
+        if (isSwitchingMedia) {
+            return;
         }
 
+        isSwitchingMedia = true;
+        isMediaReady = false;
+
         try {
+            File file = playlist.get(index);
+            currentPlayingIndex = index;
+
+            // 释放旧的MediaPlayer
+            if (mediaPlayer != null) {
+                try {
+                    mediaPlayer.stop();
+                    mediaPlayer.dispose();
+                } catch (Exception e) {
+                    System.err.println("释放MediaPlayer时出错: " + e.getMessage());
+                }
+                mediaPlayer = null;
+            }
+
+            // 更新UI状态
+            fileNameLabel.setText(file.getName());
+            isPlaying = false;
+            playPauseBtn.setGraphic(playIcon);
+            progressSlider.setValue(0.0);
+            updateProgressSliderStyle(0.0);
+            currentTimeLabel.setText("00:00");
+            totalTimeLabel.setText("00:00");
+
+            // 先显示背景图和蒙版，等待媒体加载
+            bgImage.setVisible(true);
+            blackMask.setVisible(true);
+            bgImage.toFront();
+            centerPlayIcon.setVisible(false);
+            isMediaEnded = false;
+
+            // 刷新列表项样式
+            playlistView.refresh();
+            setPlaybackButtonsDisabled(true); // 禁用直到媒体准备就绪
+
+            // 创建新的Media对象
             Media media = new Media(file.toURI().toString());
             mediaPlayer = new MediaPlayer(media);
             mediaView.setMediaPlayer(mediaPlayer);
-            mediaPlayer.setVolume(volumeSlider.getValue());
+
+            // 设置音量和倍速
+            if (volumeSlider.getValue() > 0) {
+                mediaPlayer.setVolume(volumeSlider.getValue());
+            }
             mediaPlayer.setRate(currentSpeed);
             updateSpeedButtonText();
 
-            fileNameLabel.setText(file.getName());
-            bgImage.setVisible(false);
-            blackMask.setVisible(false);
-            isMediaEnded = false;
-
+            // 监听媒体准备就绪
             mediaPlayer.setOnReady(() -> {
                 Platform.runLater(() -> {
-                    bindProgressUpdate();
-                    updateTimeDisplay(Duration.ZERO, mediaPlayer.getTotalDuration());
-                    updateProgressSliderStyle(0.0);
-                    mediaPlayer.play();
-                    isPlaying = true;
-                    playPauseBtn.setGraphic(pauseIcon);
-                    updateCenterPlayIconVisibility();
-                    playlistView.refresh();
-                    setPlaybackButtonsDisabled(false);
+                    try {
+                        isMediaReady = true;
+
+                        // 检查媒体是否有效
+                        Duration totalDuration = mediaPlayer.getTotalDuration();
+                        if (totalDuration == null || totalDuration.isUnknown()) {
+                            throw new RuntimeException("无法获取媒体时长");
+                        }
+
+                        // 绑定进度更新
+                        bindProgressUpdate();
+
+                        // 更新总时长显示
+                        updateTimeDisplay(Duration.ZERO, totalDuration);
+
+                        // 重置进度条
+                        progressSlider.setValue(0.0);
+                        updateProgressSliderStyle(0.0);
+
+                        // 开始播放
+                        mediaPlayer.play();
+                        isPlaying = true;
+                        playPauseBtn.setGraphic(pauseIcon);
+
+                        // 隐藏背景图和蒙版
+                        bgImage.setVisible(false);
+                        blackMask.setVisible(false);
+
+                        updateCenterPlayIconVisibility();
+
+                        // 刷新列表项样式
+                        playlistView.refresh();
+                        setPlaybackButtonsDisabled(false); // 启用播放控件
+
+                        isSwitchingMedia = false;
+                    } catch (Exception e) {
+                        System.err.println("媒体准备就绪时发生错误: " + e.getMessage());
+                        handleMediaError(file);
+                        isSwitchingMedia = false;
+                    }
                 });
             });
 
+            // 监听播放结束
             mediaPlayer.setOnEndOfMedia(() -> {
                 Platform.runLater(() -> {
                     handleMediaEnd();
+                    isSwitchingMedia = false;
                 });
             });
 
+            // 监听暂停和播放
             mediaPlayer.setOnPaused(() -> {
                 Platform.runLater(() -> {
                     updateCenterPlayIconVisibility();
-                    boolean showBg = isMediaEnded;
-                    bgImage.setVisible(showBg);
-                    blackMask.setVisible(showBg);
-                    if (showBg) {
-                        bgImage.toFront();
-                    }
                 });
             });
 
             mediaPlayer.setOnPlaying(() -> {
                 Platform.runLater(() -> {
-                    bgImage.setVisible(false);
-                    blackMask.setVisible(false);
                     updateCenterPlayIconVisibility();
                 });
             });
 
+            // 监听错误
             mediaPlayer.setOnError(() -> {
                 Platform.runLater(() -> {
-                    System.err.println("媒体播放错误：" + mediaPlayer.getError().getMessage());
-                    setPlaybackButtonsDisabled(true);
-                    bgImage.setVisible(true);
-                    blackMask.setVisible(true);
-                    bgImage.toFront();
+                    handleMediaError(file);
+                    isSwitchingMedia = false;
+                });
+            });
+
+            // 添加媒体播放状态监听
+            mediaPlayer.statusProperty().addListener((obs, oldStatus, newStatus) -> {
+                Platform.runLater(() -> {
+                    if (newStatus == MediaPlayer.Status.STOPPED ||
+                            newStatus == MediaPlayer.Status.HALTED) {
+                        isSwitchingMedia = false;
+                    }
                 });
             });
 
         } catch (Exception e) {
             System.err.println("文件加载失败：" + e.getMessage());
-            e.printStackTrace();
-            setPlaybackButtonsDisabled(true);
-            mediaPlayer = null;
-            bgImage.setVisible(true);
-            blackMask.setVisible(true);
-            bgImage.toFront();
+            handleMediaError(playlist.get(index));
+            isSwitchingMedia = false;
         }
     }
 
-    // 处理媒体播放结束
+    // 新增：媒体错误处理方法
+    private void handleMediaError(File file) {
+        System.err.println("媒体播放错误：" + (mediaPlayer != null && mediaPlayer.getError() != null ?
+                mediaPlayer.getError().getMessage() : "未知错误"));
+
+        // 重置状态
+        isPlaying = false;
+        playPauseBtn.setGraphic(playIcon);
+        isMediaReady = false;
+
+        // 显示背景图和蒙版
+        bgImage.setVisible(true);
+        blackMask.setVisible(true);
+        bgImage.toFront();
+
+        // 更新UI
+        playlistView.refresh();
+        updateCenterPlayIconVisibility();
+        setPlaybackButtonsDisabled(true);
+
+        // 从播放列表中移除损坏的文件
+        if (file != null && playlist.contains(file)) {
+            playlist.remove(file);
+            currentPlayingIndex = -1;
+            updatePlaylistCount();
+        }
+
+        // 显示错误提示
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("播放错误");
+        alert.setHeaderText("无法播放文件");
+        alert.setContentText("文件格式可能不受支持或已损坏: " +
+                (file != null ? file.getName() : "未知文件"));
+        alert.showAndWait();
+    }
+
+    // 处理媒体播放结束（升级后的逻辑）
     private void handleMediaEnd() {
         if (isAutoPlayNext && currentPlayingIndex < playlist.size() - 1) {
             // 自动播放下一曲
@@ -463,16 +574,24 @@ public class PlayerController {
             playPauseBtn.setGraphic(playIcon);
             progressSlider.setValue(0.0);
             updateProgressSliderStyle(0.0);
+            // 播放结束时显示背景图和蒙版
             bgImage.setVisible(true);
             blackMask.setVisible(true);
             bgImage.toFront();
-            updateTimeDisplay(Duration.ZERO, mediaPlayer.getTotalDuration());
+
+            if (mediaPlayer != null && isMediaReady) {
+                updateTimeDisplay(Duration.ZERO, mediaPlayer.getTotalDuration());
+            } else {
+                currentTimeLabel.setText("00:00");
+                totalTimeLabel.setText("00:00");
+            }
+
             updateCenterPlayIconVisibility();
             playlistView.refresh();
         }
     }
 
-    // 从播放列表移除选中项
+    // 从播放列表移除选中项（升级后的逻辑）
     private void removeSelectedFromPlaylist() {
         File selectedFile = playlistView.getSelectionModel().getSelectedItem();
         if (selectedFile == null) {
@@ -480,40 +599,97 @@ public class PlayerController {
         }
 
         int originalIndex = playlist.indexOf(selectedFile);
+        boolean isCurrentPlaying = (originalIndex == currentPlayingIndex);
+
+        // 先移除文件
         playlist.remove(selectedFile);
 
-        if (originalIndex == currentPlayingIndex) {
+        if (isCurrentPlaying) {
+            // 当前正在播放的项被删除
+            stopMedia(); // 停止并重置播放器
+
+            // 自动播放下一首（如果开启且存在）
+            if (isAutoPlayNext && !playlist.isEmpty()) {
+                int nextIndex = originalIndex;
+                if (nextIndex >= playlist.size()) {
+                    nextIndex = playlist.size() - 1;
+                }
+                if (nextIndex >= 0) {
+                    playFromPlaylist(nextIndex);
+                    return;
+                }
+            }
+
+            // 否则：没有自动播放或列表为空
             currentPlayingIndex = -1;
-            stopMedia();
             fileNameLabel.setText("未选择文件");
             bgImage.setVisible(true);
             blackMask.setVisible(true);
-        } else if (originalIndex < currentPlayingIndex) {
-            currentPlayingIndex--;
+            bgImage.toFront();
+            setPlaybackButtonsDisabled(true);
+            progressSlider.setValue(0.0);
+            updateProgressSliderStyle(0.0);
+            currentTimeLabel.setText("00:00");
+            totalTimeLabel.setText("00:00");
+            centerPlayIcon.setVisible(false);
+        } else {
+            // 调整当前播放索引（如果被删项在当前项之前）
+            if (originalIndex < currentPlayingIndex) {
+                currentPlayingIndex--;
+            }
         }
 
         playlistView.refresh();
         updatePlaylistCount();
     }
 
-    // 清空播放列表
+    // 清空播放列表（升级后的逻辑，彻底释放资源）
     private void clearPlaylist() {
+        // 先停止并彻底清理播放器
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.dispose();
+            mediaPlayer = null;
+        }
+
+        // 重置状态
         playlist.clear();
         currentPlayingIndex = -1;
-        stopMedia();
+        isPlaying = false;
+        isMediaEnded = true;
+        isSwitchingMedia = false;
+        isMediaReady = false;
+
+        // 重置 UI
         fileNameLabel.setText("未选择文件");
         bgImage.setVisible(true);
         blackMask.setVisible(true);
+        bgImage.toFront();
+
+        currentTimeLabel.setText("00:00");
+        totalTimeLabel.setText("00:00");
+        progressSlider.setValue(0.0);
+        updateProgressSliderStyle(0.0);
+        playPauseBtn.setGraphic(playIcon);
+        centerPlayIcon.setVisible(false);
+
+        // 禁用播放控件
+        setPlaybackButtonsDisabled(true);
+
+        // 刷新视图
         playlistView.refresh();
         updatePlaylistCount();
     }
 
-    // 打开媒体文件（整合播放列表逻辑）
+    // 打开媒体文件（升级后的逻辑，扩展文件格式支持）
     private void openMediaFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择媒体文件");
         fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("媒体文件", "*.mp4", "*.avi", "*.mkv", "*.mp3", "*.wav")
+                new FileChooser.ExtensionFilter("媒体文件", "*.mp4", "*.avi", "*.mkv", "*.mp3", "*.wav", "*.flv", "*.mov", "*.wmv"),
+                new FileChooser.ExtensionFilter("视频文件", "*.mp4", "*.avi", "*.mkv", "*.flv", "*.mov", "*.wmv"),
+                new FileChooser.ExtensionFilter("音频文件", "*.mp3", "*.wav", "*.aac", "*.flac"),
+                new FileChooser.ExtensionFilter("所有文件", "*.*")
         );
 
         selectedMediaFile = fileChooser.showOpenDialog(rootPane.getScene().getWindow());
@@ -537,19 +713,19 @@ public class PlayerController {
         playFromPlaylist(currentPlayingIndex);
     }
 
-    // 更新按钮禁用状态（整合所有功能按钮）
+    // 更新按钮禁用状态（保留，包含倍速/快进/快退按钮）
     private void setPlaybackButtonsDisabled(boolean disabled) {
         playPauseBtn.setDisable(disabled);
         progressSlider.setDisable(disabled);
         speedBtn.setDisable(disabled);
         rewindBtn.setDisable(disabled);
         forwardBtn.setDisable(disabled);
-        centerPlayIcon.setVisible(!disabled && mediaPlayer != null && !isPlaying);
+        centerPlayIcon.setVisible(!disabled && mediaPlayer != null && isMediaReady && !isPlaying);
     }
 
-    // 切换播放/暂停（整合播放列表空判断）
+    // 切换播放/暂停（保留，增加isMediaReady判断）
     private void togglePlayPause() {
-        if (mediaPlayer == null) {
+        if (mediaPlayer == null || !isMediaReady) {
             // 如果有播放列表项，播放第一个
             if (!playlist.isEmpty() && currentPlayingIndex == -1) {
                 playFromPlaylist(0);
@@ -573,7 +749,7 @@ public class PlayerController {
         updateCenterPlayIconVisibility();
     }
 
-    // ---- 以下为通用方法，无需修改 ----
+    // ---- 以下为通用方法，保留并少量优化 ----
     private void initCSS() {
         URL cssUrl = getClass().getClassLoader().getResource("css/player.css");
         if (cssUrl != null) {
@@ -586,7 +762,7 @@ public class PlayerController {
 
     private void initMediaContainerClick() {
         mediaContainer.setOnMouseClicked(e -> {
-            if (mediaPlayer != null) {
+            if (mediaPlayer != null && isMediaReady) {
                 if (e.getTarget() != centerPlayIcon && !centerPlayIcon.isHover()) {
                     togglePlayPause();
                 }
@@ -597,7 +773,7 @@ public class PlayerController {
 
     private void initCenterPlayIcon() {
         centerPlayIcon.setOnMouseClicked(e -> {
-            if (mediaPlayer != null && !isPlaying) {
+            if (mediaPlayer != null && isMediaReady && !isPlaying) {
                 togglePlayPause();
             }
         });
@@ -626,22 +802,27 @@ public class PlayerController {
         progressSlider.setOnMousePressed(e -> isDraggingProgress = true);
         progressSlider.setOnMouseReleased(e -> {
             isDraggingProgress = false;
-            if (mediaPlayer != null && mediaPlayer.getTotalDuration() != null) {
+            if (mediaPlayer != null && isMediaReady && mediaPlayer.getTotalDuration() != null) {
                 double seekTime = progressSlider.getValue() * mediaPlayer.getTotalDuration().toSeconds();
                 double progress = progressSlider.getValue();
-                mediaPlayer.seek(Duration.seconds(seekTime));
-                updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
-                updateProgressSliderStyle(progress);
+                // 新增：参数有效性校验
+                if (!Double.isNaN(progress) && !Double.isInfinite(progress)) {
+                    mediaPlayer.seek(Duration.seconds(seekTime));
+                    updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
+                    updateProgressSliderStyle(progress);
+                }
             }
         });
 
         progressSlider.setOnMouseClicked(e -> {
-            if (mediaPlayer != null && mediaPlayer.getTotalDuration() != null) {
+            if (mediaPlayer != null && isMediaReady && mediaPlayer.getTotalDuration() != null) {
                 double seekTime = progressSlider.getValue() * mediaPlayer.getTotalDuration().toSeconds();
                 double progress = progressSlider.getValue();
-                mediaPlayer.seek(Duration.seconds(seekTime));
-                updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
-                updateProgressSliderStyle(progress);
+                if (!Double.isNaN(progress) && !Double.isInfinite(progress)) {
+                    mediaPlayer.seek(Duration.seconds(seekTime));
+                    updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
+                    updateProgressSliderStyle(progress);
+                }
             }
         });
         updateProgressSliderStyle(0.0);
@@ -658,11 +839,19 @@ public class PlayerController {
     }
 
     private void updateProgressSliderStyle(double progress) {
+        // 新增：参数有效性校验
+        if (Double.isNaN(progress) || Double.isInfinite(progress)) {
+            progress = 0.0;
+        }
+        progress = Math.max(0.0, Math.min(1.0, progress));
+
+        final double finalProgress = progress;
+
         Platform.runLater(() -> {
             Node track = progressSlider.lookup(".track");
             if (track == null) return;
 
-            double progressPercent = Math.max(0, Math.min(100, progress * 100));
+            double progressPercent = finalProgress * 100;
 
             String gradientStyle = String.format(
                     "-fx-background-color: linear-gradient(to right, " +
@@ -688,7 +877,7 @@ public class PlayerController {
 
     private void updateCenterPlayIconVisibility() {
         Platform.runLater(() -> {
-            boolean visible = (mediaPlayer != null && !isPlaying);
+            boolean visible = (mediaPlayer != null && isMediaReady && !isPlaying);
             centerPlayIcon.setVisible(visible);
             if (visible) {
                 adjustCenterPlayIconSize();
@@ -749,13 +938,18 @@ public class PlayerController {
 
     private void bindProgressUpdate() {
         mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
-            if (!isDraggingProgress && mediaPlayer.getTotalDuration() != null) {
+            if (!isDraggingProgress && mediaPlayer.getTotalDuration() != null && isMediaReady) {
                 double progress = newTime.toSeconds() / mediaPlayer.getTotalDuration().toSeconds();
-                Platform.runLater(() -> {
-                    progressSlider.setValue(progress);
-                    updateTimeDisplay(newTime, mediaPlayer.getTotalDuration());
-                });
-                updateProgressSliderStyle(progress);
+                // 新增：参数有效性校验
+                if (!Double.isNaN(progress) && !Double.isInfinite(progress)) {
+                    progress = Math.max(0.0, Math.min(1.0, progress));
+                    double finalProgress = progress;
+                    Platform.runLater(() -> {
+                        progressSlider.setValue(finalProgress);
+                        updateTimeDisplay(newTime, mediaPlayer.getTotalDuration());
+                    });
+                    updateProgressSliderStyle(progress);
+                }
             }
         });
     }
