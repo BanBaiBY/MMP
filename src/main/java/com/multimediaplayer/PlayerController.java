@@ -1784,16 +1784,6 @@ public class PlayerController {
         });
     }
 
-    private void updateLastPlayProgress() {
-        if (!isRememberLastPlay || mediaPlayer == null || !isMediaReady) {
-            return;
-        }
-        if (currentPlayingIndex >= 0 && currentPlayingIndex < playlist.size()) {
-            lastPlayFilePath = playlist.get(currentPlayingIndex).getAbsolutePath();
-            lastPlaybackProgress = mediaPlayer.getCurrentTime().toSeconds();
-        }
-    }
-
     /**
      * 格式化时长：将Duration对象转换为"MM:SS"格式的字符串
      * @param duration 待格式化的时长
