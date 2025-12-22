@@ -76,7 +76,7 @@ public class PlayerController {
     @FXML private ImageView bgImage;         // 无媒体时的背景图片
     @FXML private Polygon centerPlayIcon;    // 媒体区域中央的大型播放按钮
     @FXML private Rectangle blackMask;       // 视觉优化遮罩（增强背景图对比度）
-    @FXML private Rectangle gradientMask;    // 新增：渐变遮罩，用于更好的视觉效果
+    @FXML private Rectangle gradientMask;    // 渐变遮罩，用于更好的视觉效果
 
     // -------------------------- 基础功能控件：播放控制相关按钮与滑块 --------------------------
     @FXML private Button openBtn;            // 打开媒体文件按钮
@@ -319,7 +319,7 @@ public class PlayerController {
         rootPane.setOnMouseClicked(e -> rootPane.requestFocus());
     }
 
-    // ==================== 键盘控制功能（来自第二个代码）====================
+    // ==================== 键盘控制功能====================
     private void initializeKeyboardControls() {
         // 监听场景变化
         rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
@@ -787,7 +787,7 @@ public class PlayerController {
         });
     }
 
-    // ==================== 配置管理功能（来自第二个代码）====================
+    // ==================== 配置管理功能 ====================
     private void savePlayConfig() {
         try {
             Properties props = new Properties();
@@ -916,7 +916,7 @@ public class PlayerController {
         ));
         autoPlayNextCheckBox.setSelected(isAutoPlayNext);
 
-        // 2. 记忆上次内容开关（重新添加，因为在您的代码中缺少这个）
+        // 2. 记忆上次内容开关
         CheckBox rememberLastPlayCheckBox = new CheckBox("记忆上次播放内容（列表+播放进度）");
         rememberLastPlayCheckBox.setStyle(String.format(
                 "-fx-text-fill: %s; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;",
@@ -939,7 +939,7 @@ public class PlayerController {
         HBox volumeBox = new HBox(10, volumeLabel, defaultVolumeSlider);
         volumeBox.setAlignment(Pos.CENTER_LEFT);
 
-        // 4. 主题选择（使用第一个代码的ThemeManager）
+        // 4. 主题选择
         Label themeLabel = new Label("播放器主题：");
         themeLabel.setStyle(String.format(
                 "-fx-text-fill: %s; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;",
@@ -1012,7 +1012,7 @@ public class PlayerController {
         // 添加所有设置项
         settingsContent.getChildren().addAll(
                 autoPlayNextCheckBox,
-                rememberLastPlayCheckBox, // 重新添加这个
+                rememberLastPlayCheckBox,
                 volumeBox,
                 themeBox
         );
@@ -1023,7 +1023,7 @@ public class PlayerController {
             if (buttonType == ButtonType.OK) {
                 // 保存设置
                 isAutoPlayNext = autoPlayNextCheckBox.isSelected();
-                isRememberLastPlay = rememberLastPlayCheckBox.isSelected(); // 保存这个设置
+                isRememberLastPlay = rememberLastPlayCheckBox.isSelected();
 
                 double newVolume = defaultVolumeSlider.getValue();
                 volumeSlider.setValue(newVolume);
@@ -1051,7 +1051,6 @@ public class PlayerController {
         settingsDialog.showAndWait();
     }
 
-    // ==================== 以下为第一个代码的原有方法，保持不变 ====================
     /**
      * 初始化主题下拉框：添加主题选项、设置默认值、绑定切换事件
      */
