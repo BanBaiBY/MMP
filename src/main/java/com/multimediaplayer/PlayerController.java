@@ -283,13 +283,21 @@ public class PlayerController {
         // 自动恢复上次播放
         if (isRememberLastPlay && !lastPlayFilePath.isEmpty()) {
             File lastFile = new File(lastPlayFilePath);
-            if (lastFile.exists() && playlist.contains(lastFile)) {
+            if (lastFile.exists()) {
+                // 确保文件在播放列表中
+                if (!playlist.contains(lastFile)) {
+                    playlist.add(lastFile);
+                }
+
                 int index = playlist.indexOf(lastFile);
                 if (index >= 0) {
-                    playFromPlaylist(index);
-                    if (mediaPlayer != null) {
-                        mediaPlayer.setOnReady(() -> mediaPlayer.seek(Duration.seconds(lastPlaybackProgress)));
-                    }
+                    // 稍后播放，确保UI已加载完成
+                    Platform.runLater(() -> {
+                        playFromPlaylist(index);
+                        if (mediaPlayer != null) {
+                            mediaPlayer.setOnReady(() -> mediaPlayer.seek(Duration.seconds(lastPlaybackProgress)));
+                        }
+                    });
                 }
             }
         }
@@ -714,19 +722,15 @@ public class PlayerController {
     }
 
     // ==================== 配置管理功能 ====================
+    // 保存所有配置（新增音量、主题）
     private void savePlayConfig() {
-        if (!isRememberLastPlay) {
-            return;
-        }
-
         try {
             Properties props = new Properties();
             // 原有配置
             props.setProperty("isRememberLastPlay", String.valueOf(isRememberLastPlay));
             props.setProperty("isAutoPlayNext", String.valueOf(isAutoPlayNext));
-            // 新增：保存默认音量、倍速、主题
+            // 新增：保存默认音量、主题
             props.setProperty("defaultVolume", String.valueOf(volumeSlider.getValue()));
-            props.setProperty("defaultSpeed", String.valueOf(currentSpeed));
             props.setProperty("selectedTheme", selectedTheme); // 保存主题
 
             // 播放列表
@@ -739,7 +743,16 @@ public class PlayerController {
             }
             props.setProperty("playlist", playlistStr.toString());
 
-            // 上次播放信息
+            // 上次播放信息 - 只在记忆播放时保存
+            if (isRememberLastPlay && currentPlayingIndex >= 0 && currentPlayingIndex < playlist.size()) {
+                lastPlayFilePath = playlist.get(currentPlayingIndex).getAbsolutePath();
+                lastPlaybackProgress = mediaPlayer != null && isMediaReady ?
+                        mediaPlayer.getCurrentTime().toSeconds() : 0.0;
+            } else {
+                lastPlayFilePath = "";
+                lastPlaybackProgress = 0.0;
+            }
+
             props.setProperty("lastPlayFilePath", lastPlayFilePath);
             props.setProperty("lastPlaybackProgress", String.valueOf(lastPlaybackProgress));
 
@@ -771,13 +784,10 @@ public class PlayerController {
             isRememberLastPlay = Boolean.parseBoolean(props.getProperty("isRememberLastPlay", "false"));
             isAutoPlayNext = Boolean.parseBoolean(props.getProperty("isAutoPlayNext", "true"));
 
-            // 新增：恢复默认音量、倍速、主题
+            // 新增：恢复默认音量、主题
             // 恢复默认音量
             double savedVolume = Double.parseDouble(props.getProperty("defaultVolume", "0.5"));
             volumeSlider.setValue(savedVolume);
-            // 恢复默认倍速
-            currentSpeed = Double.parseDouble(props.getProperty("defaultSpeed", "1.0"));
-            updateSpeedButtonText();
             // 恢复主题（预留）
             selectedTheme = props.getProperty("selectedTheme", "默认主题");
 
@@ -804,17 +814,8 @@ public class PlayerController {
         }
     }
 
-    private void updateLastPlayProgress() {
-        if (!isRememberLastPlay || mediaPlayer == null || !isMediaReady) {
-            return;
-        }
-        if (currentPlayingIndex >= 0 && currentPlayingIndex < playlist.size()) {
-            lastPlayFilePath = playlist.get(currentPlayingIndex).getAbsolutePath();
-            lastPlaybackProgress = mediaPlayer.getCurrentTime().toSeconds();
-        }
-    }
 
-    // ==================== 设置对话框功能 ====================
+    // 设置对话框功能
     private void openSettingsDialog() {
         Dialog<Void> settingsDialog = new Dialog<>();
         settingsDialog.setTitle("播放器设置");
@@ -846,10 +847,6 @@ public class PlayerController {
         defaultVolumeSlider.setPrefWidth(150);
         HBox volumeBox = new HBox(10, volumeLabel, defaultVolumeSlider);
         volumeBox.setAlignment(Pos.CENTER_LEFT);
-
-        // 4. 倍速默认值设置
-        Label speedLabel = new Label("默认播放倍速：");
-        speedLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;");
 
         ComboBox<Double> speedComboBox = new ComboBox<>();
         speedComboBox.getItems().addAll(speedOptions);
@@ -921,9 +918,6 @@ public class PlayerController {
                         "-fx-selection-bar-text: #ffffff;"
         );
 
-        HBox speedBox = new HBox(10, speedLabel, speedComboBox);
-        speedBox.setAlignment(Pos.CENTER_LEFT);
-
         // 5. 主题选择（加载保存的主题）
         Label themeLabel = new Label("播放器主题：");
         themeLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;");
@@ -950,7 +944,6 @@ public class PlayerController {
                 autoPlayNextCheckBox,
                 rememberLastPlayCheckBox,
                 volumeBox,
-                speedBox,
                 themeBox
         );
         dialogPane.setContent(settingsContent);
@@ -1790,7 +1783,6 @@ public class PlayerController {
         mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
             if (!isDraggingProgress && mediaPlayer.getTotalDuration() != null && isMediaReady) {
                 double progress = newTime.toSeconds() / mediaPlayer.getTotalDuration().toSeconds();
-                // 参数有效性校验
                 if (!Double.isNaN(progress) && !Double.isInfinite(progress)) {
                     progress = Math.max(0.0, Math.min(1.0, progress));
                     double finalProgress = progress;
@@ -1800,11 +1792,23 @@ public class PlayerController {
                     });
                     updateProgressSliderStyle(progress);
 
-                    // 更新上次播放进度
-                    updateLastPlayProgress();
+                    // 只在记忆播放时更新进度
+                    if (isRememberLastPlay) {
+                        updateLastPlayProgress();
+                    }
                 }
             }
         });
+    }
+
+    private void updateLastPlayProgress() {
+        if (!isRememberLastPlay || mediaPlayer == null || !isMediaReady) {
+            return;
+        }
+        if (currentPlayingIndex >= 0 && currentPlayingIndex < playlist.size()) {
+            lastPlayFilePath = playlist.get(currentPlayingIndex).getAbsolutePath();
+            lastPlaybackProgress = mediaPlayer.getCurrentTime().toSeconds();
+        }
     }
 
     private void stopMedia() {
