@@ -14,6 +14,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -21,6 +22,9 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.RadialGradient;
+import javafx.scene.paint.Stop;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
@@ -72,6 +76,7 @@ public class PlayerController {
     @FXML private ImageView bgImage;         // 无媒体时的背景图片
     @FXML private Polygon centerPlayIcon;    // 媒体区域中央的大型播放按钮
     @FXML private Rectangle blackMask;       // 视觉优化遮罩（增强背景图对比度）
+    @FXML private Rectangle gradientMask;    // 新增：渐变遮罩，用于更好的视觉效果
 
     // -------------------------- 基础功能控件：播放控制相关按钮与滑块 --------------------------
     @FXML private Button openBtn;            // 打开媒体文件按钮
@@ -227,9 +232,11 @@ public class PlayerController {
         // 延迟初始化背景图和媒体视图尺寸绑定，避免界面加载异常
         Platform.runLater(() -> {
             initBgImage();
+            initGradientMask();
             bindMediaViewSize();
             bgImage.setVisible(true);
             blackMask.setVisible(true);
+            gradientMask.setVisible(true);
             bgImage.toFront();
 
             // 初始化键盘控制
@@ -326,6 +333,62 @@ public class PlayerController {
             setupKeyboardEventHandlers(rootPane.getScene());
         }
     }
+
+    /**
+     * 初始化渐变遮罩：创建径向渐变遮罩，提供更柔和的视觉效果
+     */
+    private void initGradientMask() {
+        // 创建径向渐变遮罩
+        gradientMask = new Rectangle();
+        gradientMask.setFill(Color.TRANSPARENT); // 初始透明
+
+        // 将渐变遮罩添加到容器，确保它在正确的位置
+        if (!mediaContainer.getChildren().contains(gradientMask)) {
+            mediaContainer.getChildren().add(1, gradientMask); // 放在背景图之上，黑色遮罩之下
+        }
+
+        // 绑定尺寸到容器
+        gradientMask.widthProperty().bind(mediaContainer.widthProperty());
+        gradientMask.heightProperty().bind(mediaContainer.heightProperty());
+
+        // 监听主题变化，更新渐变遮罩
+        ThemeManager.Theme currentTheme = themeManager.getCurrentTheme();
+        updateGradientMask(currentTheme);
+    }
+
+    /**
+     * 更新渐变遮罩样式：根据主题切换不同的渐变效果
+     * @param theme 当前主题
+     */
+    private void updateGradientMask(ThemeManager.Theme theme) {
+        if (gradientMask == null) return;
+
+        Platform.runLater(() -> {
+            if (theme == ThemeManager.Theme.DARK) {
+                // 深色主题：暗色径向渐变，中心透明，边缘深色
+                gradientMask.setFill(new RadialGradient(
+                        0, 0, 0.5, 0.5, 0.8, true, CycleMethod.NO_CYCLE,
+                        new Stop(0, Color.TRANSPARENT),
+                        new Stop(0.3, Color.rgb(0, 0, 0, 0.3)),
+                        new Stop(0.6, Color.rgb(0, 0, 0, 0.6)),
+                        new Stop(1, Color.rgb(0, 0, 0, 0.8))
+                ));
+                blackMask.setFill(Color.rgb(0, 0, 0, 0.3)); // 深色主题用较浅的黑色遮罩
+            } else {
+                // 浅色主题：亮色径向渐变，中心透明，边缘浅色
+                gradientMask.setFill(new RadialGradient(
+                        0, 0, 0.5, 0.5, 0.8, true, CycleMethod.NO_CYCLE,
+                        new Stop(0, Color.TRANSPARENT),
+                        new Stop(0.3, Color.rgb(255, 255, 255, 0.2)),
+                        new Stop(0.6, Color.rgb(255, 255, 255, 0.4)),
+                        new Stop(1, Color.rgb(255, 255, 255, 0.6))
+                ));
+                blackMask.setFill(Color.rgb(0, 0, 0, 0.2)); // 浅色主题用更浅的黑色遮罩
+            }
+        });
+    }
+
+
 
     private void setupKeyboardEventHandlers(Scene scene) {
         // 移除旧的事件处理器（避免重复）
@@ -1013,6 +1076,7 @@ public class PlayerController {
                 updateSpeedMenuStyle();
                 updateSpeedButtonStyle();
                 updateTimeLabelColor();
+                updateGradientMask(selectedTheme);
                 updateTimeDisplay(
                         mediaPlayer != null ? mediaPlayer.getCurrentTime() : Duration.ZERO,
                         mediaPlayer != null ? mediaPlayer.getTotalDuration() : Duration.ZERO
@@ -1468,6 +1532,7 @@ public class PlayerController {
             mediaPlayer.setRate(currentSpeed);
 
             // 媒体就绪监听：初始化播放状态和UI
+            // 媒体就绪监听：初始化播放状态和UI
             mediaPlayer.setOnReady(() -> Platform.runLater(() -> {
                 try {
                     isMediaReady = true;
@@ -1483,9 +1548,10 @@ public class PlayerController {
                     isPlaying = true;
                     playPauseBtn.setGraphic(pauseIcon);
 
-                    // 隐藏背景图和遮罩，确保媒体视图置顶
+                    // 隐藏所有遮罩，确保媒体视图置顶
                     bgImage.setVisible(false);
                     blackMask.setVisible(false);
+                    gradientMask.setVisible(false); // 隐藏渐变遮罩
                     bgImage.toBack();
                     mediaView.toFront();
 
@@ -1519,12 +1585,13 @@ public class PlayerController {
                             : Duration.ZERO;
                     updateTimeDisplay(Duration.ZERO, validTotalDuration);
 
-                    // 显示背景图和遮罩，媒体视图置底
+                    // 显示背景图和所有遮罩，媒体视图置底
                     bgImage.setVisible(true);
                     blackMask.setVisible(true);
+                    gradientMask.setVisible(true); // 显示渐变遮罩
                     bgImage.toFront();
                     mediaView.toBack();
-                    logger.info("【媒体播放结束】已重置到开头，显示背景图，停止进度更新");
+                    logger.info("【媒体播放结束】已重置到开头，显示背景图和遮罩");
                 }
                 isSwitchingMedia = false;
             }));
@@ -1535,6 +1602,7 @@ public class PlayerController {
                 final boolean showBg = isMediaEnded;
                 bgImage.setVisible(showBg);
                 blackMask.setVisible(showBg);
+                gradientMask.setVisible(showBg); // 根据播放结束状态显示渐变遮罩
                 if (showBg) {
                     bgImage.toFront();
                     mediaView.toBack();
@@ -1546,14 +1614,9 @@ public class PlayerController {
                 updateCenterPlayIconVisibility();
                 bgImage.setVisible(false);
                 blackMask.setVisible(false);
+                gradientMask.setVisible(false); // 播放时隐藏渐变遮罩
                 bgImage.toBack();
                 mediaView.toFront();
-            }));
-
-            // 媒体错误监听：处理播放异常
-            mediaPlayer.setOnError(() -> Platform.runLater(() -> {
-                handleMediaError(file);
-                isSwitchingMedia = false;
             }));
 
         } catch (Exception e) {
@@ -1851,6 +1914,13 @@ public class PlayerController {
 
         // 更新按钮形状坐标
         centerPlayIcon.getPoints().setAll(0.0, 0.0, 0.0, iconHeight, iconWidth, iconHeight / 2);
+
+        // 为中央播放按钮添加发光效果
+        if (themeManager.getCurrentTheme() == ThemeManager.Theme.DARK) {
+            centerPlayIcon.setEffect(new DropShadow(15, Color.rgb(255, 255, 255, 0.7)));
+        } else {
+            centerPlayIcon.setEffect(new DropShadow(15, Color.rgb(0, 0, 0, 0.5)));
+        }
     }
 
     /**
@@ -1938,6 +2008,12 @@ public class PlayerController {
         bgImage.setLayoutX((containerW - bgImage.getFitWidth()) / 2);
         bgImage.setLayoutY((containerH - bgImage.getFitHeight()) / 2);
         bgImage.toFront();
+
+        // 确保遮罩在正确的位置
+        if (gradientMask != null) {
+            gradientMask.toBack();
+            blackMask.toBack();
+        }
     }
 
     /**
