@@ -24,7 +24,7 @@
             fx:id="rootPane"
             style="-fx-background-color: #000000;">
 
-    <!-- 顶部导航栏（整合两个文件功能，保留新增播放列表相关按钮） -->
+    <!-- 顶部导航栏（移除原移除/清空按钮，新增设置按钮） -->
     <top>
         <HBox fx:id="topNavi"
               spacing="15.0"
@@ -53,22 +53,10 @@
                                -fx-padding: 0 10px;
                                -fx-border-width: 0;
                                -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
-                <Button fx:id="removeFromPlaylistBtn"
-                        text="➖ 移除选中"
-                        prefWidth="100.0"
-                        prefHeight="30.0"
-                        style="-fx-background-color: #363636;
-                               -fx-text-fill: #ffffff;
-                               -fx-font-family: 'Microsoft YaHei';
-                               -fx-font-size: 13px;
-                               -fx-background-radius: 6px;
-                               -fx-cursor: hand;
-                               -fx-padding: 0 10px;
-                               -fx-border-width: 0;
-                               -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
-                <Button fx:id="clearPlaylistBtn"
-                        text="🗑️ 清空列表"
-                        prefWidth="100.0"
+                <!-- 新增设置按钮 -->
+                <Button fx:id="settingsBtn"
+                        text="设置"
+                        prefWidth="80.0"
                         prefHeight="30.0"
                         style="-fx-background-color: #363636;
                                -fx-text-fill: #ffffff;
@@ -104,10 +92,10 @@
         </HBox>
     </top>
 
-    <!-- 中间媒体区域 + 折叠播放列表（沿用第二个文件结构，整合第一个文件媒体容器内容） -->
+    <!-- 中间媒体区域 + 折叠播放列表 -->
     <center>
         <StackPane minWidth="0" minHeight="0">
-            <!-- 媒体播放容器（保留第一个文件核心配置，统一blackMask为false由控制器控制） -->
+            <!-- 媒体播放容器 -->
             <StackPane fx:id="mediaContainer"
                        style="-fx-background-color: black;"
                        minWidth="0" minHeight="0">
@@ -123,7 +111,7 @@
                                width="${mediaContainer.width}"
                                height="${mediaContainer.height}"
                                fill="black"
-                               visible="false"/> <!-- 统一为false，由控制器控制 -->
+                               visible="false"/>
                     <ImageView fx:id="bgImage"
                                preserveRatio="true"
                                pickOnBounds="false"
@@ -137,7 +125,7 @@
                 </children>
             </StackPane>
 
-            <!-- 播放列表容器（保留第二个文件完整结构）-->
+            <!-- 播放列表容器（底部新增移除/清空按钮）-->
             <VBox fx:id="playlistContainer"
                   style="-fx-background-color: rgba(34, 34, 34, 0.95);
                          -fx-border-width: 0 0 0 1px;
@@ -211,12 +199,50 @@
                                           -fx-padding: 20px;"/>
                         </placeholder>
                     </ListView>
+
+                    <!-- 播放列表底部操作按钮（新增） -->
+                    <HBox fx:id="playlistActionBox"
+                          spacing="8.0"
+                          alignment="CENTER"
+                          style="-fx-padding: 8px 10px;
+                                 -fx-background-color: rgba(51, 51, 51, 0.95);
+                                 -fx-border-width: 1px 0 0 0;
+                                 -fx-border-color: rgba(68, 68, 68, 0.9);">
+                        <children>
+                            <Button fx:id="removeFromPlaylistBtn"
+                                    text="➖ 移除选中"
+                                    prefWidth="100.0"
+                                    prefHeight="30.0"
+                                    style="-fx-background-color: #363636;
+                                           -fx-text-fill: #ffffff;
+                                           -fx-font-family: 'Microsoft YaHei';
+                                           -fx-font-size: 13px;
+                                           -fx-background-radius: 6px;
+                                           -fx-cursor: hand;
+                                           -fx-padding: 0 10px;
+                                           -fx-border-width: 0;
+                                           -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+                            <Button fx:id="clearPlaylistBtn"
+                                    text="🗑️ 清空列表"
+                                    prefWidth="100.0"
+                                    prefHeight="30.0"
+                                    style="-fx-background-color: #363636;
+                                           -fx-text-fill: #ffffff;
+                                           -fx-font-family: 'Microsoft YaHei';
+                                           -fx-font-size: 13px;
+                                           -fx-background-radius: 6px;
+                                           -fx-cursor: hand;
+                                           -fx-padding: 0 10px;
+                                           -fx-border-width: 0;
+                                           -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
+                        </children>
+                    </HBox>
                 </children>
             </VBox>
         </StackPane>
     </center>
 
-    <!-- 底部控制栏（整合两个文件功能，保留快进/后退/倍速按钮，添加上下首按钮） -->
+    <!-- 底部控制栏 -->
     <bottom>
         <VBox fx:id="bottomContainer"
               spacing="2.0"
@@ -262,7 +288,7 @@
                       alignment="CENTER"
                       StackPane.alignment="CENTER"
                       layoutX="-40.0">
-                    <!-- 上一首按钮（新增完整样式，解决样式缺失问题） -->
+                    <!-- 上一首按钮 -->
                     <Button fx:id="prevMediaBtn"
                             prefWidth="40.0" prefHeight="30.0"
                             alignment="CENTER"
@@ -302,7 +328,7 @@
                                    -fx-padding: 0;
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
-                    <!-- 下一首按钮（新增完整样式，解决样式缺失问题） -->
+                    <!-- 下一首按钮 -->
                     <Button fx:id="nextMediaBtn"
                             prefWidth="40.0" prefHeight="30.0"
                             alignment="CENTER"
