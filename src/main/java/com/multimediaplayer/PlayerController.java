@@ -1901,5 +1901,6 @@ public class PlayerController {
         prevMediaBtn.setDisable(disabled || playlist.isEmpty() || currentPlayingIndex <= 0);
         nextMediaBtn.setDisable(disabled || playlist.isEmpty() || currentPlayingIndex >= playlist.size() - 1);
         centerPlayIcon.setVisible(!disabled && mediaPlayer != null && isMediaReady && !isPlaying);
+        System.out.println("hello");
     }
 }
