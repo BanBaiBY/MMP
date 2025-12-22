@@ -16,6 +16,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ComboBox?> <!-- 整合FXML B的ComboBox导入 -->
 
 <BorderPane xmlns="http://javafx.com/javafx/17.0.17"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -24,7 +25,7 @@
             fx:id="rootPane"
             style="-fx-background-color: #000000;">
 
-    <!-- 顶部导航栏（整合两个文件功能，保留新增播放列表相关按钮） -->
+    <!-- 顶部导航栏（整合：保留播放列表操作按钮+新增主题下拉框） -->
     <top>
         <HBox fx:id="topNavi"
               spacing="15.0"
@@ -100,14 +101,30 @@
                               -fx-padding: 0 10px;
                               -fx-text-overrun: ellipsis;"
                        HBox.hgrow="ALWAYS"/>
+
+                <!-- 整合FXML B的主题选择下拉框 -->
+                <HBox alignment="CENTER" spacing="5.0" style="-fx-padding: 0 20px 0 10px;">
+                    <Label text="主题：" style="-fx-text-fill: #cccccc; -fx-font-family: 'Microsoft YaHei'; -fx-font-size: 13px;"/>
+                    <ComboBox fx:id="themeComboBox"
+                              prefWidth="120.0"
+                              prefHeight="30.0"
+                              style="-fx-background-color: #363636;
+                                     -fx-text-fill: #ffffff;
+                                     -fx-font-family: 'Microsoft YaHei';
+                                     -fx-font-size: 13px;
+                                     -fx-background-radius: 6px;
+                                     -fx-border-width: 0;
+                                     -fx-cursor: hand;
+                                     -fx-padding: 0 5px;"/>
+                </HBox>
             </children>
         </HBox>
     </top>
 
-    <!-- 中间媒体区域 + 折叠播放列表（沿用第二个文件结构，整合第一个文件媒体容器内容） -->
+    <!-- 中间媒体区域（保留FXML A的折叠播放列表，统一blackMask为控制器控制） -->
     <center>
         <StackPane minWidth="0" minHeight="0">
-            <!-- 媒体播放容器（保留第一个文件核心配置，统一blackMask为false由控制器控制） -->
+            <!-- 媒体播放容器（统一blackMask visible="false"，由控制器控制） -->
             <StackPane fx:id="mediaContainer"
                        style="-fx-background-color: black;"
                        minWidth="0" minHeight="0">
@@ -123,7 +140,7 @@
                                width="${mediaContainer.width}"
                                height="${mediaContainer.height}"
                                fill="black"
-                               visible="false"/> <!-- 统一为false，由控制器控制 -->
+                               visible="false"/> <!-- 统一为FXML A的配置，由控制器控制 -->
                     <ImageView fx:id="bgImage"
                                preserveRatio="true"
                                pickOnBounds="false"
@@ -137,7 +154,7 @@
                 </children>
             </StackPane>
 
-            <!-- 播放列表容器（保留第二个文件完整结构）-->
+            <!-- 保留FXML A的折叠播放列表容器 -->
             <VBox fx:id="playlistContainer"
                   style="-fx-background-color: rgba(34, 34, 34, 0.95);
                          -fx-border-width: 0 0 0 1px;
@@ -216,7 +233,7 @@
         </StackPane>
     </center>
 
-    <!-- 底部控制栏（整合两个文件功能，保留快进/后退/倍速按钮，添加上下首按钮） -->
+    <!-- 底部控制栏（保留FXML A的全功能控制按钮，放弃FXML B的单独大尺寸播放按钮） -->
     <bottom>
         <VBox fx:id="bottomContainer"
               spacing="2.0"
@@ -256,13 +273,13 @@
                     <Insets top="5.0" right="20.0" bottom="5.0" left="20.0"/>
                 </padding>
 
-                <!-- 快进/后退+播放暂停+上下首按钮容器 -->
+                <!-- 保留FXML A的完整控制按钮组（上下首+快进后退+播放暂停） -->
                 <HBox fx:id="playControlBox"
                       spacing="8.0"
                       alignment="CENTER"
                       StackPane.alignment="CENTER"
                       layoutX="-40.0">
-                    <!-- 上一首按钮（新增完整样式，解决样式缺失问题） -->
+                    <!-- 上一首按钮 -->
                     <Button fx:id="prevMediaBtn"
                             prefWidth="40.0" prefHeight="30.0"
                             alignment="CENTER"
@@ -282,7 +299,7 @@
                                    -fx-padding: 0;
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
-                    <!-- 播放/暂停按钮 -->
+                    <!-- 播放/暂停按钮（保留FXML A尺寸，放弃FXML B的大尺寸） -->
                     <Button fx:id="playPauseBtn"
                             prefWidth="50.0" prefHeight="30.0"
                             alignment="CENTER"
@@ -302,7 +319,7 @@
                                    -fx-padding: 0;
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
-                    <!-- 下一首按钮（新增完整样式，解决样式缺失问题） -->
+                    <!-- 下一首按钮 -->
                     <Button fx:id="nextMediaBtn"
                             prefWidth="40.0" prefHeight="30.0"
                             alignment="CENTER"
@@ -313,7 +330,7 @@
                                    -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
                 </HBox>
 
-                <!-- 倍速按钮 -->
+                <!-- 保留FXML A的倍速按钮 -->
                 <Button fx:id="speedBtn"
                         prefWidth="60.0" prefHeight="30.0"
                         alignment="CENTER"
@@ -329,6 +346,7 @@
                            -fx-border-width: 0;
                            -fx-effect: dropshadow(gaussian, #000000, 2, 0, 0, 1);"/>
 
+                <!-- 音量滑块（保留FXML A布局） -->
                 <HBox alignment="CENTER_RIGHT"
                       StackPane.alignment="CENTER_RIGHT"
                       style="-fx-background-radius: 3px;"
