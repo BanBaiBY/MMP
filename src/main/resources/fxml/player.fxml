@@ -179,7 +179,7 @@
         </StackPane>
     </center>
 
-    <!-- 底部控制栏：保留FXML1结构，整合FXML2布局合理性，移除冲突内联样式 -->
+    <!-- 底部控制栏 -->
     <bottom>
         <VBox fx:id="bottomContainer"
               spacing="2.0">
