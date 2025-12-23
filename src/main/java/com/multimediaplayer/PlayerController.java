@@ -991,22 +991,30 @@ public class PlayerController {
             playPauseBtn.setGraphic(playIcon);
             progressSlider.setValue(0.0);
             updateProgressSliderStyle(0.0);
-            // 播放结束时显示背景图和蒙版
-            bgImage.setVisible(true);
-            blackMask.setVisible(true);
-            bgImage.toFront();
 
-            if (mediaPlayer != null && isMediaReady) {
-                updateTimeDisplay(Duration.ZERO, mediaPlayer.getTotalDuration());
-            } else {
-                currentTimeLabel.setText("00:00");
-                totalTimeLabel.setText("00:00");
-            }
+            // 异步执行UI层级和显示控制，确保浅色模式下渲染正常
+            Platform.runLater(() -> {
+                // 显示背景图和遮罩
+                bgImage.setVisible(true);
+                blackMask.setVisible(true);
+                // 批量置顶背景图和遮罩，确保层级高于媒体层
+                bgImage.toFront();
+                blackMask.toFront();
+                // 强制将媒体视图置底，避免遮挡背景
+                mediaView.toBack();
 
-            updateCenterPlayIconVisibility();
-            playlistView.refresh();
-            // 更新按钮状态
-            updatePrevNextBtnStatus();
+                if (mediaPlayer != null && isMediaReady) {
+                    updateTimeDisplay(Duration.ZERO, mediaPlayer.getTotalDuration());
+                } else {
+                    currentTimeLabel.setText("00:00");
+                    totalTimeLabel.setText("00:00");
+                }
+
+                updateCenterPlayIconVisibility();
+                playlistView.refresh();
+                // 更新按钮状态
+                updatePrevNextBtnStatus();
+            });
         }
     }
 
@@ -1060,22 +1068,30 @@ public class PlayerController {
             // 暂停逻辑：暂停媒体并更新UI
             mediaPlayer.pause();
             playPauseBtn.setGraphic(playIcon);
-            final boolean showBg = isMediaEnded;
-            bgImage.setVisible(showBg);
-            blackMask.setVisible(showBg);
-            if (showBg) {
-                bgImage.toFront();
-                mediaView.toBack();
-            }
+
+            // 异步执行UI状态更新，确保浅色模式下渲染正常
+            Platform.runLater(() -> {
+                final boolean showBg = isMediaEnded;
+                bgImage.setVisible(showBg);
+                blackMask.setVisible(showBg);
+                if (showBg) {
+                    mediaView.toBack();
+                    bgImage.toFront();
+                    blackMask.toFront();
+                }
+            });
         } else {
             // 播放逻辑：播放媒体并更新UI
             isMediaEnded = false;
             mediaPlayer.play();
             playPauseBtn.setGraphic(pauseIcon);
-            bgImage.setVisible(false);
-            blackMask.setVisible(false);
-            mediaView.toFront();
-            bgImage.toBack();
+
+            Platform.runLater(() -> {
+                bgImage.setVisible(false);
+                blackMask.setVisible(false);
+                mediaView.toFront();
+                bgImage.toBack();
+            });
         }
         isPlaying = !isPlaying;
         updateCenterPlayIconVisibility();
@@ -1100,15 +1116,19 @@ public class PlayerController {
                     : Duration.ZERO;
             updateTimeDisplay(Duration.ZERO, validTotalDuration);
 
-            // 显示背景图和遮罩，媒体视图置底
-            final boolean showBg = isMediaEnded;
-            bgImage.setVisible(showBg);
-            blackMask.setVisible(showBg);
-            if (showBg) {
-                bgImage.toFront();
-                mediaView.toBack();
-            }
-            updateCenterPlayIconVisibility();
+            // 异步执行背景图和遮罩的显示与层级控制
+            Platform.runLater(() -> {
+                final boolean showBg = isMediaEnded;
+                bgImage.setVisible(showBg);
+                blackMask.setVisible(showBg);
+                if (showBg) {
+                    // 先置底媒体层，再置顶背景和遮罩，层级顺序更稳定
+                    mediaView.toBack();
+                    bgImage.toFront();
+                    blackMask.toFront();
+                }
+                updateCenterPlayIconVisibility();
+            });
         }
     }
 
@@ -1217,11 +1237,16 @@ public class PlayerController {
                 mediaContainer.heightProperty().addListener((o, oldH, newH) -> adjustBgImageSize());
                 adjustBgImageSize();
 
-                // 设置初始可见性
-                final boolean noMedia = selectedMediaFile == null;
-                bgImage.setVisible(noMedia);
-                blackMask.setVisible(noMedia);
-                bgImage.toFront();
+                // 初始化时设置背景图和遮罩的层级，确保遮罩在背景图上方
+                Platform.runLater(() -> {
+                    final boolean noMedia = selectedMediaFile == null;
+                    bgImage.setVisible(noMedia);
+                    blackMask.setVisible(noMedia);
+                    // 遮罩置顶于背景图，背景图置顶于媒体层
+                    bgImage.toFront();
+                    blackMask.toFront();
+                    mediaView.toBack();
+                });
             }
         });
     }
