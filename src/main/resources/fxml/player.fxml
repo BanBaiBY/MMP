@@ -235,7 +235,7 @@
                         </placeholder>
                     </ListView>
 
-                    <!-- 播放列表底部操作按钮（来自第二个FXML的改进） -->
+                    <!-- 播放列表底部操作按钮 -->
                     <HBox fx:id="playlistActionBox"
                           spacing="8.0"
                           alignment="CENTER"
