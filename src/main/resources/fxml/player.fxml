@@ -18,7 +18,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ComboBox?>
 
-<!-- 播放器主布局：采用BorderPane分上、中、下三区域布局 -->
+<!-- 播放器主布局：采用BorderPane分上、中、下三区域布局，保留主题切换能力，整合优化布局 -->
 <BorderPane xmlns="http://javafx.com/javafx/17.0.17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.multimediaplayer.PlayerController"
@@ -26,7 +26,7 @@
             prefHeight="600.0"
             fx:id="rootPane">
 
-    <!-- 顶部导航栏：包含文件操作、播放列表管理、主题切换功能 -->
+    <!-- 顶部导航栏：整合FXML1主题切换 + FXML2新增settingsBtn，移除顶部remove/清空按钮 -->
     <top>
         <HBox fx:id="topNavi"
               spacing="15.0"
@@ -43,16 +43,10 @@
                         prefWidth="120.0"
                         prefHeight="30.0"/>
 
-                <!-- 从播放列表移除选中项按钮 -->
-                <Button fx:id="removeFromPlaylistBtn"
-                        text="➖ 移除选中"
-                        prefWidth="100.0"
-                        prefHeight="30.0"/>
-
-                <!-- 清空整个播放列表按钮 -->
-                <Button fx:id="clearPlaylistBtn"
-                        text="🗑️ 清空列表"
-                        prefWidth="100.0"
+                <!-- FXML2新增：设置按钮 -->
+                <Button fx:id="settingsBtn"
+                        text="设置"
+                        prefWidth="80.0"
                         prefHeight="30.0"/>
 
                 <!-- 播放列表展开/折叠切换按钮 -->
@@ -67,7 +61,7 @@
                        text="未选择文件"
                        HBox.hgrow="ALWAYS"/>
 
-                <!-- 主题切换下拉框容器 -->
+                <!-- FXML1保留：主题切换下拉框容器 -->
                 <HBox alignment="CENTER" spacing="5.0">
                     <Label text="主题："/>
                     <ComboBox fx:id="themeComboBox"
@@ -78,7 +72,7 @@
         </HBox>
     </top>
 
-    <!-- 中间核心区域：包含媒体播放区和折叠式播放列表 -->
+    <!-- 中间核心区域：整合FXML2播放列表底部操作按钮，保留原有媒体播放区 -->
     <center>
         <StackPane minWidth="0" minHeight="0">
             <!-- 媒体播放容器：承载视频/音频播放、背景图、遮罩和中心播放按钮 -->
@@ -116,7 +110,7 @@
                 </children>
             </StackPane>
 
-            <!-- 折叠式播放列表容器：默认隐藏，通过切换按钮展开/收起 -->
+            <!-- 折叠式播放列表容器：整合FXML2底部操作按钮，默认隐藏 -->
             <VBox fx:id="playlistContainer"
                   prefWidth="280.0"
                   minWidth="0"
@@ -161,12 +155,31 @@
                             </Label>
                         </placeholder>
                     </ListView>
+
+                    <!-- FXML2新增：播放列表底部操作按钮（移除/清空按钮迁移至此） -->
+                    <HBox fx:id="playlistActionBox"
+                          spacing="8.0"
+                          alignment="CENTER">
+                        <padding>
+                            <Insets top="8" right="10" bottom="8" left="10"/>
+                        </padding>
+                        <children>
+                            <Button fx:id="removeFromPlaylistBtn"
+                                    text="➖ 移除选中"
+                                    prefWidth="100.0"
+                                    prefHeight="30.0"/>
+                            <Button fx:id="clearPlaylistBtn"
+                                    text="🗑️ 清空列表"
+                                    prefWidth="100.0"
+                                    prefHeight="30.0"/>
+                        </children>
+                    </HBox>
                 </children>
             </VBox>
         </StackPane>
     </center>
 
-    <!-- 底部控制栏：包含播放进度、时长显示和播放功能控制 -->
+    <!-- 底部控制栏：保留FXML1结构，整合FXML2布局合理性，移除冲突内联样式 -->
     <bottom>
         <VBox fx:id="bottomContainer"
               spacing="2.0">
@@ -182,7 +195,7 @@
                     <HBox prefWidth="50.0" alignment="CENTER_RIGHT">
                         <Text fx:id="currentTimeLabel" text="00:00" id="timeLabel"/>
                     </HBox>
-                    <!-- 播放进度滑块：可拖动调整播放位置 -->
+                    <!-- 播放列表展开/折叠切换按钮 -->
                     <Slider fx:id="progressSlider"
                             min="0.0"
                             max="1.0"
