@@ -8,6 +8,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -15,10 +16,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
@@ -27,6 +27,7 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
@@ -37,8 +38,7 @@ import java.util.logging.Logger;
 
 /**
  * 多媒体播放器核心控制器
- * 负责界面交互绑定、媒体播放管理、播放列表维护、主题切换、UI样式更新等全量业务逻辑
- * 支持视频/音频播放、倍速调节、快进后退、上一首/下一首切换、播放列表搜索过滤等功能
+ * 整合功能：媒体播放、播放列表管理、主题切换、键盘快捷键控制、UI交互优化
  */
 public class PlayerController {
     // 日志对象：用于记录程序运行状态和异常信息
@@ -82,7 +82,7 @@ public class PlayerController {
     private final ObservableList<File> playlist = FXCollections.observableArrayList(); // 原始播放列表数据
     private final FilteredList<File> filteredPlaylist; // 过滤后的播放列表（支持搜索）
     private int currentPlayingIndex = -1; // 当前播放媒体在列表中的索引
-    private boolean isAutoPlayNext = true; // 是否开启播放结束后自动播放下一首
+    private final boolean isAutoPlayNext = true; // 是否开启播放结束后自动播放下一首
 
     // -------------------------- 媒体核心变量：控制媒体播放状态 --------------------------
     private MediaPlayer mediaPlayer;       // 媒体播放器核心对象
@@ -113,6 +113,9 @@ public class PlayerController {
     // -------------------------- 主题管理器：负责主题切换与样式管理 --------------------------
     private final ThemeManager themeManager = ThemeManager.getInstance();
 
+    // -------------------------- 键盘控制相关：快捷键提示容器 --------------------------
+    private StackPane keyboardTipContainer;
+
     /**
      * 构造方法：初始化各类图标、倍速菜单和播放列表过滤对象
      */
@@ -127,6 +130,8 @@ public class PlayerController {
         Rectangle rect2 = new Rectangle(10, 0, 7, 20);
         rect1.setFill(Color.WHITE);
         rect2.setFill(Color.WHITE);
+        rect1.setSmooth(true);
+        rect2.setSmooth(true);
         pauseIcon = new HBox(3, rect1, rect2);
         pauseIcon.setAlignment(Pos.CENTER);
         pauseIcon.setPrefSize(24, 24);
@@ -136,6 +141,8 @@ public class PlayerController {
         Polygon tri2Left = new Polygon(12.0, 4.0, 12.0, 20.0, 0.0, 12.0);
         tri1Left.setFill(Color.WHITE);
         tri2Left.setFill(Color.WHITE);
+        tri1Left.setSmooth(true);
+        tri2Left.setSmooth(true);
         rewindIcon = new HBox(1, tri2Left, tri1Left);
         rewindIcon.setAlignment(Pos.CENTER);
         rewindIcon.setPrefSize(24, 24);
@@ -145,6 +152,8 @@ public class PlayerController {
         Polygon tri2Right = new Polygon(12.0, 4.0, 12.0, 20.0, 24.0, 12.0);
         tri1Right.setFill(Color.WHITE);
         tri2Right.setFill(Color.WHITE);
+        tri1Right.setSmooth(true);
+        tri2Right.setSmooth(true);
         forwardIcon = new HBox(1, tri1Right, tri2Right);
         forwardIcon.setAlignment(Pos.CENTER);
         forwardIcon.setPrefSize(24, 24);
@@ -152,6 +161,7 @@ public class PlayerController {
         // 初始化上一首图标（单左箭头）
         Polygon tri3Left = new Polygon(12.0, 5.0, 12.0, 25.0, 4.0, 15.0);
         tri3Left.setFill(Color.WHITE);
+        tri3Left.setSmooth(true);
         prevMediaIcon = new HBox(tri3Left);
         prevMediaIcon.setAlignment(Pos.CENTER);
         prevMediaIcon.setPrefSize(24, 24);
@@ -159,6 +169,7 @@ public class PlayerController {
         // 初始化下一首图标（单右箭头）
         Polygon tri3Right = new Polygon(8.0, 5.0, 8.0, 25.0, 16.0, 15.0);
         tri3Right.setFill(Color.WHITE);
+        tri3Right.setSmooth(true);
         nextMediaIcon = new HBox(tri3Right);
         nextMediaIcon.setAlignment(Pos.CENTER);
         nextMediaIcon.setPrefSize(24, 24);
@@ -177,12 +188,10 @@ public class PlayerController {
     public void initialize() {
         // 延迟初始化CSS和主题下拉框，确保界面元素加载完成
         Platform.runLater(() -> {
-            Platform.runLater(() -> {
-                initCSS();
-                initThemeComboBox();
-                updateSpeedButtonStyle();
-                logger.info("【初始化】主题与下拉框已完成初始化");
-            });
+            initCSS();
+            initThemeComboBox();
+            updateSpeedButtonStyle();
+            logger.info("【初始化】主题与下拉框已完成初始化");
         });
 
         // 设置初始状态：未选择文件
@@ -216,6 +225,10 @@ public class PlayerController {
             bgImage.setVisible(true);
             blackMask.setVisible(true);
             bgImage.toFront();
+
+            // 初始化键盘控制
+            initializeKeyboardControls();
+            showInitialKeyboardTip();
         });
 
         // 绑定按钮点击事件
@@ -249,8 +262,12 @@ public class PlayerController {
         // 设置初始状态：所有播放控制按钮禁用
         setPlaybackButtonsDisabled(true);
         updateTimeDisplay(Duration.ZERO, Duration.ZERO);
+
+        rootPane.setFocusTraversable(true);
+        rootPane.setOnMouseClicked(e -> rootPane.requestFocus());
     }
 
+    // ==================== 主题相关方法 ====================
     /**
      * 初始化主题下拉框：添加主题选项、设置默认值、绑定切换事件
      */
@@ -317,28 +334,6 @@ public class PlayerController {
     }
 
     /**
-     * 初始化倍速选择菜单：添加倍速选项并绑定选择事件
-     */
-    private void initSpeedMenu() {
-        speedMenu = new ContextMenu();
-
-        // 为每个倍速选项创建菜单项并绑定事件
-        for (double speed : speedOptions) {
-            final double finalSpeed = speed;
-            MenuItem item = new MenuItem(String.format("%.2fx", finalSpeed));
-            item.getStyleClass().add("speed-menu-item");
-            item.setOnAction(e -> {
-                currentSpeed = finalSpeed;
-                updateSpeedButtonText();
-                if (mediaPlayer != null && isMediaReady) {
-                    mediaPlayer.setRate(currentSpeed);
-                }
-            });
-            speedMenu.getItems().add(item);
-        }
-    }
-
-    /**
      * 更新倍速菜单样式：根据当前主题切换菜单样式类
      */
     private void updateSpeedMenuStyle() {
@@ -392,6 +387,29 @@ public class PlayerController {
         totalTimeLabel.setFill(textColor);
     }
 
+    // ==================== 倍速相关方法 ====================
+    /**
+     * 初始化倍速选择菜单：添加倍速选项并绑定选择事件
+     */
+    private void initSpeedMenu() {
+        speedMenu = new ContextMenu();
+
+        // 为每个倍速选项创建菜单项并绑定事件
+        for (double speed : speedOptions) {
+            final double finalSpeed = speed;
+            MenuItem item = new MenuItem(String.format("%.2fx", finalSpeed));
+            item.getStyleClass().add("speed-menu-item");
+            item.setOnAction(e -> {
+                currentSpeed = finalSpeed;
+                updateSpeedButtonText();
+                if (mediaPlayer != null && isMediaReady) {
+                    mediaPlayer.setRate(currentSpeed);
+                }
+            });
+            speedMenu.getItems().add(item);
+        }
+    }
+
     /**
      * 初始化倍速按钮：设置初始文本和点击事件
      */
@@ -413,6 +431,7 @@ public class PlayerController {
         speedBtn.setText(String.format("%.2fx", currentSpeed));
     }
 
+    // ==================== 上一首/下一首相关方法 ====================
     /**
      * 初始化上一首/下一首按钮：设置样式和点击事件
      */
@@ -460,6 +479,7 @@ public class PlayerController {
         nextMediaBtn.setDisable(currentPlayingIndex >= playlist.size() - 1);
     }
 
+    // ==================== 播放进度控制方法 ====================
     /**
      * 后退30秒：将播放进度向前调整指定时长
      */
@@ -494,6 +514,155 @@ public class PlayerController {
         updateTimeDisplay(Duration.seconds(finalNewTime), mediaPlayer.getTotalDuration());
     }
 
+    /**
+     * 初始化进度条：绑定鼠标事件，处理进度拖动和点击调整
+     */
+    private void initProgressSlider() {
+        // 鼠标按下：标记为拖动状态
+        progressSlider.setOnMousePressed(e -> isDraggingProgress = true);
+
+        // 鼠标释放：结束拖动并更新播放进度
+        progressSlider.setOnMouseReleased(e -> {
+            isDraggingProgress = false;
+            if (mediaPlayer != null && isMediaReady && mediaPlayer.getTotalDuration() != null) {
+                final double seekTime = progressSlider.getValue() * mediaPlayer.getTotalDuration().toSeconds();
+                final double progress = progressSlider.getValue();
+                mediaPlayer.seek(Duration.seconds(seekTime));
+                updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
+                updateProgressSliderStyle(progress);
+
+                // 确保播放状态下画面正常显示
+                if (isPlaying) {
+                    bgImage.setVisible(false);
+                    blackMask.setVisible(false);
+                    mediaView.toFront();
+                    bgImage.toBack();
+                }
+            }
+        });
+
+        // 鼠标点击：直接调整到点击位置的进度
+        progressSlider.setOnMouseClicked(e -> {
+            if (mediaPlayer != null && isMediaReady && mediaPlayer.getTotalDuration() != null) {
+                final double seekTime = progressSlider.getValue() * mediaPlayer.getTotalDuration().toSeconds();
+                final double progress = progressSlider.getValue();
+                mediaPlayer.seek(Duration.seconds(seekTime));
+                updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
+                updateProgressSliderStyle(progress);
+
+                // 确保播放状态下画面正常显示
+                if (isPlaying) {
+                    bgImage.setVisible(false);
+                    blackMask.setVisible(false);
+                    mediaView.toFront();
+                    bgImage.toBack();
+                }
+            }
+        });
+
+        // 初始化进度条样式
+        updateProgressSliderStyle(0.0);
+    }
+
+    /**
+     * 更新进度条样式：根据当前主题和播放进度设置进度条渐变样式
+     * @param progress 播放进度（0.0 ~ 1.0）
+     */
+    private void updateProgressSliderStyle(double progress) {
+        // 进度值合法性校验
+        if (Double.isNaN(progress) || Double.isInfinite(progress)) progress = 0.0;
+        progress = Math.max(0.0, Math.min(1.0, progress));
+        final double finalProgress = progress;
+
+        // 异步更新样式，避免UI阻塞
+        Platform.runLater(() -> {
+            Node track = progressSlider.lookup(".track");
+            if (track == null) {
+                logger.warning("【进度条样式】未找到track节点，样式设置失败");
+                return;
+            }
+
+            // 根据主题获取样式颜色
+            String primaryColor, trackColor;
+            ThemeManager.Theme currentTheme = themeManager.getCurrentTheme();
+            switch (currentTheme) {
+                case DARK:
+                    primaryColor = "#FF6347"; // 深色主题主色
+                    trackColor = "#444444";   // 深色主题轨道色
+                    break;
+                case LIGHT:
+                default:
+                    primaryColor = "#1E90FF"; // 浅色主题主色
+                    trackColor = "#e0e0e0";   // 浅色主题轨道色
+            }
+
+            // 构建渐变样式并应用
+            final double progressPercent = finalProgress * 100;
+            String gradientStyle = String.format(
+                    "-fx-background-color: linear-gradient(to right, %s 0%%, %s %.2f%%, %s %.2f%%, %s 100%%) !important;" +
+                            "-fx-background-radius: 0 !important;" +
+                            "-fx-padding: 4px !important;",
+                    primaryColor, primaryColor, progressPercent, trackColor, progressPercent, trackColor
+            );
+            track.setStyle(gradientStyle);
+            logger.finest("【进度条样式】已更新，进度：%.2f%%，主题：%s".formatted(progressPercent, currentTheme.getDisplayName()));
+        });
+    }
+
+    /**
+     * 绑定进度更新：监听媒体播放时间变化，同步更新进度条和时长显示
+     */
+    private void bindProgressUpdate() {
+        mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
+            // 播放结束或拖动进度时不更新
+            if (!isDraggingProgress && !isMediaEnded && mediaPlayer.getTotalDuration() != null && isMediaReady) {
+                double tempProgress = newTime.toSeconds() / mediaPlayer.getTotalDuration().toSeconds();
+                tempProgress = Math.max(0.0, Math.min(1.0, tempProgress));
+                final double finalProgress = tempProgress;
+                final Duration finalNewTime = newTime;
+
+                // 异步更新UI
+                Platform.runLater(() -> {
+                    progressSlider.setValue(finalProgress);
+                    updateTimeDisplay(finalNewTime, mediaPlayer.getTotalDuration());
+                });
+
+                // 实时更新进度条样式
+                updateProgressSliderStyle(finalProgress);
+            }
+        });
+    }
+
+    // ==================== 时长格式化方法 ====================
+    /**
+     * 格式化时长：将Duration对象转换为"MM:SS"格式的字符串
+     * @param duration 待格式化的时长
+     * @return 格式化后的时长字符串
+     */
+    private String formatDuration(Duration duration) {
+        if (duration == null || duration.isUnknown()) return "00:00";
+        int totalSeconds = (int) Math.floor(Math.max(0, duration.toSeconds()));
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
+
+    /**
+     * 更新时长显示：同步当前播放时长和总时长的文本显示
+     * @param current 当前播放时长
+     * @param total 媒体总时长
+     */
+    private void updateTimeDisplay(Duration current, Duration total) {
+        final Duration finalCurrent = current;
+        final Duration finalTotal = total;
+        Platform.runLater(() -> {
+            currentTimeLabel.setText(formatDuration(finalCurrent));
+            totalTimeLabel.setText(formatDuration(finalTotal));
+            updateTimeLabelColor();
+        });
+    }
+
+    // ==================== 播放列表相关方法 ====================
     /**
      * 初始化播放列表折叠/展开功能：绑定切换按钮事件，添加淡入淡出动画
      */
@@ -637,6 +806,7 @@ public class PlayerController {
         playlistView.refresh();
     }
 
+    // ==================== 媒体播放核心方法 ====================
     /**
      * 打开媒体文件：通过文件选择器选择文件并添加到播放列表
      */
@@ -764,31 +934,7 @@ public class PlayerController {
 
             // 媒体播放结束监听：处理自动播放下一首或重置状态
             mediaPlayer.setOnEndOfMedia(() -> Platform.runLater(() -> {
-                if (isAutoPlayNext && currentPlayingIndex < playlist.size() - 1) {
-                    playFromPlaylist(currentPlayingIndex + 1);
-                } else {
-                    // 重置播放状态和UI
-                    mediaPlayer.pause();
-                    mediaPlayer.seek(Duration.ZERO);
-                    isPlaying = false;
-                    isMediaEnded = true;
-                    playPauseBtn.setGraphic(playIcon);
-                    progressSlider.setValue(0.0);
-                    updateProgressSliderStyle(0.0);
-
-                    // 确保时长显示有效
-                    Duration validTotalDuration = mediaPlayer.getTotalDuration() != null
-                            ? mediaPlayer.getTotalDuration()
-                            : Duration.ZERO;
-                    updateTimeDisplay(Duration.ZERO, validTotalDuration);
-
-                    // 显示背景图和遮罩，媒体视图置底
-                    bgImage.setVisible(true);
-                    blackMask.setVisible(true);
-                    bgImage.toFront();
-                    mediaView.toBack();
-                    logger.info("【媒体播放结束】已重置到开头，显示背景图，停止进度更新");
-                }
+                handleMediaEnd();
                 isSwitchingMedia = false;
             }));
 
@@ -823,6 +969,44 @@ public class PlayerController {
             System.err.println("文件加载失败：" + e.getMessage());
             handleMediaError(file);
             isSwitchingMedia = false;
+        }
+    }
+
+    /**
+     * 处理媒体播放结束
+     */
+    private void handleMediaEnd() {
+        if (isAutoPlayNext && currentPlayingIndex < playlist.size() - 1) {
+            // 自动播放前重置倍速
+            currentSpeed = 1.0;
+            updateSpeedButtonText();
+            // 自动播放下一曲
+            playFromPlaylist(currentPlayingIndex + 1);
+            // 补充：更新按钮状态
+            updatePrevNextBtnStatus();
+        } else {
+            // 重置播放状态
+            isPlaying = false;
+            isMediaEnded = true;
+            playPauseBtn.setGraphic(playIcon);
+            progressSlider.setValue(0.0);
+            updateProgressSliderStyle(0.0);
+            // 播放结束时显示背景图和蒙版
+            bgImage.setVisible(true);
+            blackMask.setVisible(true);
+            bgImage.toFront();
+
+            if (mediaPlayer != null && isMediaReady) {
+                updateTimeDisplay(Duration.ZERO, mediaPlayer.getTotalDuration());
+            } else {
+                currentTimeLabel.setText("00:00");
+                totalTimeLabel.setText("00:00");
+            }
+
+            updateCenterPlayIconVisibility();
+            playlistView.refresh();
+            // 更新按钮状态
+            updatePrevNextBtnStatus();
         }
     }
 
@@ -866,6 +1050,8 @@ public class PlayerController {
         if (mediaPlayer == null || !isMediaReady) {
             if (!playlist.isEmpty() && currentPlayingIndex == -1) {
                 playFromPlaylist(0);
+                // 更新按钮状态
+                updatePrevNextBtnStatus();
             }
             return;
         }
@@ -927,152 +1113,21 @@ public class PlayerController {
     }
 
     /**
-     * 初始化进度条：绑定鼠标事件，处理进度拖动和点击调整
+     * 设置播放控制按钮禁用状态：批量更新各类播放相关控件的可用状态
+     * @param disabled 是否禁用
      */
-    private void initProgressSlider() {
-        // 鼠标按下：标记为拖动状态
-        progressSlider.setOnMousePressed(e -> isDraggingProgress = true);
-
-        // 鼠标释放：结束拖动并更新播放进度
-        progressSlider.setOnMouseReleased(e -> {
-            isDraggingProgress = false;
-            if (mediaPlayer != null && isMediaReady && mediaPlayer.getTotalDuration() != null) {
-                final double seekTime = progressSlider.getValue() * mediaPlayer.getTotalDuration().toSeconds();
-                final double progress = progressSlider.getValue();
-                mediaPlayer.seek(Duration.seconds(seekTime));
-                updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
-                updateProgressSliderStyle(progress);
-
-                // 确保播放状态下画面正常显示
-                if (isPlaying) {
-                    bgImage.setVisible(false);
-                    blackMask.setVisible(false);
-                    mediaView.toFront();
-                    bgImage.toBack();
-                }
-            }
-        });
-
-        // 鼠标点击：直接调整到点击位置的进度
-        progressSlider.setOnMouseClicked(e -> {
-            if (mediaPlayer != null && isMediaReady && mediaPlayer.getTotalDuration() != null) {
-                final double seekTime = progressSlider.getValue() * mediaPlayer.getTotalDuration().toSeconds();
-                final double progress = progressSlider.getValue();
-                mediaPlayer.seek(Duration.seconds(seekTime));
-                updateTimeDisplay(mediaPlayer.getCurrentTime(), mediaPlayer.getTotalDuration());
-                updateProgressSliderStyle(progress);
-
-                // 确保播放状态下画面正常显示
-                if (isPlaying) {
-                    bgImage.setVisible(false);
-                    blackMask.setVisible(false);
-                    mediaView.toFront();
-                    bgImage.toBack();
-                }
-            }
-        });
-
-        // 初始化进度条样式
-        updateProgressSliderStyle(0.0);
+    private void setPlaybackButtonsDisabled(boolean disabled) {
+        playPauseBtn.setDisable(disabled);
+        progressSlider.setDisable(disabled);
+        speedBtn.setDisable(disabled);
+        rewindBtn.setDisable(disabled);
+        forwardBtn.setDisable(disabled);
+        prevMediaBtn.setDisable(disabled || playlist.isEmpty() || currentPlayingIndex <= 0);
+        nextMediaBtn.setDisable(disabled || playlist.isEmpty() || currentPlayingIndex >= playlist.size() - 1);
+        centerPlayIcon.setVisible(!disabled && mediaPlayer != null && isMediaReady && !isPlaying);
     }
 
-    /**
-     * 更新进度条样式：根据当前主题和播放进度设置进度条渐变样式
-     * @param progress 播放进度（0.0 ~ 1.0）
-     */
-    private void updateProgressSliderStyle(double progress) {
-        // 进度值合法性校验
-        if (Double.isNaN(progress) || Double.isInfinite(progress)) progress = 0.0;
-        progress = Math.max(0.0, Math.min(1.0, progress));
-        final double finalProgress = progress;
-
-        // 异步更新样式，避免UI阻塞
-        Platform.runLater(() -> {
-            Node track = progressSlider.lookup(".track");
-            if (track == null) {
-                logger.warning("【进度条样式】未找到track节点，样式设置失败");
-                return;
-            }
-
-            // 根据主题获取样式颜色
-            String primaryColor, trackColor;
-            ThemeManager.Theme currentTheme = themeManager.getCurrentTheme();
-            switch (currentTheme) {
-                case DARK:
-                    primaryColor = "#FF6347"; // 深色主题主色
-                    trackColor = "#444444";   // 深色主题轨道色
-                    break;
-                case LIGHT:
-                default:
-                    primaryColor = "#1E90FF"; // 浅色主题主色
-                    trackColor = "#e0e0e0";   // 浅色主题轨道色
-            }
-
-            // 构建渐变样式并应用
-            final double progressPercent = finalProgress * 100;
-            String gradientStyle = String.format(
-                    "-fx-background-color: linear-gradient(to right, %s 0%%, %s %.2f%%, %s %.2f%%, %s 100%%) !important;" +
-                            "-fx-background-radius: 0 !important;" +
-                            "-fx-padding: 4px !important;",
-                    primaryColor, primaryColor, progressPercent, trackColor, progressPercent, trackColor
-            );
-            track.setStyle(gradientStyle);
-            logger.finest("【进度条样式】已更新，进度：%.2f%%，主题：%s".formatted(progressPercent, currentTheme.getDisplayName()));
-        });
-    }
-
-    /**
-     * 绑定进度更新：监听媒体播放时间变化，同步更新进度条和时长显示
-     */
-    private void bindProgressUpdate() {
-        mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
-            // 播放结束或拖动进度时不更新
-            if (!isDraggingProgress && !isMediaEnded && mediaPlayer.getTotalDuration() != null && isMediaReady) {
-                double tempProgress = newTime.toSeconds() / mediaPlayer.getTotalDuration().toSeconds();
-                tempProgress = Math.max(0.0, Math.min(1.0, tempProgress));
-                final double finalProgress = tempProgress;
-                final Duration finalNewTime = newTime;
-
-                // 异步更新UI
-                Platform.runLater(() -> {
-                    progressSlider.setValue(finalProgress);
-                    updateTimeDisplay(finalNewTime, mediaPlayer.getTotalDuration());
-                });
-
-                // 实时更新进度条样式
-                updateProgressSliderStyle(finalProgress);
-            }
-        });
-    }
-
-    /**
-     * 格式化时长：将Duration对象转换为"MM:SS"格式的字符串
-     * @param duration 待格式化的时长
-     * @return 格式化后的时长字符串
-     */
-    private String formatDuration(Duration duration) {
-        if (duration == null || duration.isUnknown()) return "00:00";
-        int totalSeconds = (int) Math.floor(Math.max(0, duration.toSeconds()));
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60;
-        return String.format("%02d:%02d", minutes, seconds);
-    }
-
-    /**
-     * 更新时长显示：同步当前播放时长和总时长的文本显示
-     * @param current 当前播放时长
-     * @param total 媒体总时长
-     */
-    private void updateTimeDisplay(Duration current, Duration total) {
-        final Duration finalCurrent = current;
-        final Duration finalTotal = total;
-        Platform.runLater(() -> {
-            currentTimeLabel.setText(formatDuration(finalCurrent));
-            totalTimeLabel.setText(formatDuration(finalTotal));
-            updateTimeLabelColor();
-        });
-    }
-
+    // ==================== 中央播放按钮与背景图相关方法 ====================
     /**
      * 初始化中央播放按钮：绑定点击事件，监听容器尺寸变化调整按钮大小
      */
@@ -1201,18 +1256,460 @@ public class PlayerController {
         bgImage.toFront();
     }
 
+    // ==================== 键盘快捷键相关方法 ====================
     /**
-     * 设置播放控制按钮禁用状态：批量更新各类播放相关控件的可用状态
-     * @param disabled 是否禁用
+     * 初始化键盘控制
      */
-    private void setPlaybackButtonsDisabled(boolean disabled) {
-        playPauseBtn.setDisable(disabled);
-        progressSlider.setDisable(disabled);
-        speedBtn.setDisable(disabled);
-        rewindBtn.setDisable(disabled);
-        forwardBtn.setDisable(disabled);
-        prevMediaBtn.setDisable(disabled || playlist.isEmpty() || currentPlayingIndex <= 0);
-        nextMediaBtn.setDisable(disabled || playlist.isEmpty() || currentPlayingIndex >= playlist.size() - 1);
-        centerPlayIcon.setVisible(!disabled && mediaPlayer != null && isMediaReady && !isPlaying);
+    private void initializeKeyboardControls() {
+        // 监听场景变化
+        rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                setupKeyboardEventHandlers(newScene);
+            }
+        });
+
+        // 立即设置键盘处理器（如果场景已存在）
+        if (rootPane.getScene() != null) {
+            setupKeyboardEventHandlers(rootPane.getScene());
+        }
+    }
+
+    /**
+     * 设置键盘事件处理器
+     */
+    private void setupKeyboardEventHandlers(Scene scene) {
+        // 移除旧的事件处理器（避免重复）
+        scene.removeEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyPress);
+
+        // 添加新的键盘事件处理器
+        scene.addEventHandler(KeyEvent.KEY_PRESSED, this::handleKeyPress);
+
+        // 添加F1帮助键的特殊处理（始终可用）
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.F1) {
+                showKeyboardShortcutsDialog();
+                event.consume();
+            }
+        });
+    }
+
+    /**
+     * 处理键盘按键事件
+     */
+    private void handleKeyPress(KeyEvent event) {
+        // 如果在文本输入框中，除了F1外，忽略其他快捷键
+        if (event.getTarget() instanceof TextInputControl) {
+            if (event.getCode() != KeyCode.F1) {
+                return;
+            }
+        }
+
+        KeyCode keyCode = event.getCode();
+        boolean ctrlDown = event.isControlDown();
+        boolean shiftDown = event.isShiftDown();
+
+        switch (keyCode) {
+            // 播放/暂停
+            case SPACE:
+            case K:
+                togglePlayPause();
+                event.consume();
+                break;
+
+            // 进度控制
+            case RIGHT:
+                if (shiftDown) {
+                    seekForward(); // Shift+右箭头：快进30秒
+                } else if (ctrlDown) {
+                    playNextMedia(); // Ctrl+右箭头：下一首
+                } else {
+                    seek(5); // 右箭头：快进5秒
+                }
+                event.consume();
+                break;
+
+            case LEFT:
+                if (shiftDown) {
+                    seekBackward(); // Shift+左箭头：后退30秒
+                } else if (ctrlDown) {
+                    playPreviousMedia(); // Ctrl+左箭头：上一首
+                } else {
+                    seek(-5); // 左箭头：后退5秒
+                }
+                event.consume();
+                break;
+
+            // 音量控制
+            case UP:
+                if (ctrlDown) {
+                    setVolume(1.0); // Ctrl+上箭头：最大音量
+                } else {
+                    adjustVolume(0.1); // 上箭头：增加10%音量
+                }
+                event.consume();
+                break;
+
+            case DOWN:
+                if (ctrlDown) {
+                    setVolume(0.0); // Ctrl+下箭头：静音
+                } else {
+                    adjustVolume(-0.1); // 下箭头：减少10%音量
+                }
+                event.consume();
+                break;
+
+            // 全屏控制
+            case F:
+            case F11:
+                toggleFullscreen();
+                event.consume();
+                break;
+
+            // 倍速控制
+            case DIGIT1:
+            case NUMPAD1:
+                setPlaybackSpeed(1);
+                event.consume();
+                break;
+
+            case DIGIT2:
+            case NUMPAD2:
+                setPlaybackSpeed(1.5);
+                event.consume();
+                break;
+
+            case DIGIT3:
+            case NUMPAD3:
+                setPlaybackSpeed(2);
+                event.consume();
+                break;
+
+            case DIGIT0:
+            case NUMPAD0:
+                setPlaybackSpeed(0.5);
+                event.consume();
+                break;
+
+            // 静音控制
+            case M:
+                toggleMute();
+                event.consume();
+                break;
+
+            default:
+                // 其他按键不处理
+                break;
+        }
+    }
+
+    /**
+     * 精确调整播放进度
+     */
+    private void seek(int seconds) {
+        if (mediaPlayer == null || !isMediaReady || mediaPlayer.getTotalDuration() == null) {
+            return;
+        }
+
+        double currentTime = mediaPlayer.getCurrentTime().toSeconds();
+        double totalTime = mediaPlayer.getTotalDuration().toSeconds();
+        double newTime = Math.max(0, Math.min(totalTime, currentTime + seconds));
+
+        mediaPlayer.seek(Duration.seconds(newTime));
+        double progress = newTime / totalTime;
+        progressSlider.setValue(progress);
+        updateProgressSliderStyle(progress);
+        updateTimeDisplay(Duration.seconds(newTime), mediaPlayer.getTotalDuration());
+
+        // 显示临时提示
+        showTemporaryTip((seconds > 0 ? "快进 " : "后退 ") + Math.abs(seconds) + " 秒");
+    }
+
+    /**
+     * 调整音量
+     */
+    private void adjustVolume(double delta) {
+        double currentVolume = volumeSlider.getValue();
+        double newVolume = Math.max(0.0, Math.min(1.0, currentVolume + delta));
+        volumeSlider.setValue(newVolume);
+        if (mediaPlayer != null && isMediaReady) {
+            mediaPlayer.setVolume(newVolume);
+        }
+        showTemporaryTip(String.format("音量: %.0f%%", newVolume * 100));
+    }
+
+    /**
+     * 设置固定音量
+     */
+    private void setVolume(double volume) {
+        volumeSlider.setValue(volume);
+        if (mediaPlayer != null && isMediaReady) {
+            mediaPlayer.setVolume(volume);
+        }
+        showTemporaryTip(volume > 0 ? "最大音量" : "静音");
+    }
+
+    /**
+     * 切换静音状态
+     */
+    private void toggleMute() {
+        if (mediaPlayer != null && isMediaReady) {
+            if (mediaPlayer.getVolume() > 0) {
+                // 保存当前音量并静音
+                volumeSlider.setValue(0);
+                mediaPlayer.setVolume(0);
+                showTemporaryTip("静音");
+            } else {
+                // 恢复之前音量（默认为0.5）
+                double restoreVolume = volumeSlider.getValue() > 0 ? volumeSlider.getValue() : 0.5;
+                volumeSlider.setValue(restoreVolume);
+                mediaPlayer.setVolume(restoreVolume);
+                showTemporaryTip(String.format("取消静音 (%.0f%%)", restoreVolume * 100));
+            }
+        }
+    }
+
+    /**
+     * 设置播放速度
+     */
+    private void setPlaybackSpeed(double speed) {
+        if (mediaPlayer != null && isMediaReady) {
+            currentSpeed = speed;
+            mediaPlayer.setRate(currentSpeed);
+            updateSpeedButtonText();
+            showTemporaryTip(String.format("播放速度: %.1fx", currentSpeed));
+        }
+    }
+
+    /**
+     * 切换全屏状态
+     */
+    private void toggleFullscreen() {
+        Stage stage = (Stage) rootPane.getScene().getWindow();
+        // 键盘控制
+        boolean isFullscreen = !stage.isFullScreen();
+        stage.setFullScreen(isFullscreen);
+
+        if (isFullscreen) {
+            // 全屏时显示快捷键提示
+            showKeyboardShortcutsOverlay();
+        } else {
+            // 退出全屏时隐藏提示
+            hideKeyboardShortcutsOverlay();
+        }
+    }
+
+    /**
+     * 显示初始键盘提示
+     */
+    private void showInitialKeyboardTip() {
+        // 创建提示标签
+        Label keyboardTipLabel = new Label("💡 按 F1 查看键盘快捷键");
+        keyboardTipLabel.setStyle("-fx-background-color: rgba(30, 144, 255, 0.8); " +
+                "-fx-text-fill: white; " +
+                "-fx-padding: 6px 12px; " +
+                "-fx-font-size: 12px; " +
+                "-fx-background-radius: 15px; " +
+                "-fx-cursor: hand;");
+        keyboardTipLabel.setOnMouseClicked(e -> {
+            showKeyboardShortcutsDialog();
+            hideKeyboardTip();
+        });
+
+        keyboardTipContainer = new StackPane(keyboardTipLabel);
+        keyboardTipContainer.setAlignment(Pos.TOP_RIGHT);
+        keyboardTipContainer.setPadding(new Insets(10));
+        keyboardTipContainer.setPickOnBounds(false);
+        keyboardTipContainer.setMouseTransparent(true);
+
+        // 添加到根面板
+        rootPane.getChildren().add(keyboardTipContainer);
+
+        // 1.5秒后自动隐藏
+        Timeline hideTip = new Timeline(
+                new KeyFrame(Duration.seconds(1.5), e -> hideKeyboardTip())
+        );
+        hideTip.play();
+    }
+
+    /**
+     * 隐藏初始键盘提示
+     */
+    private void hideKeyboardTip() {
+        if (keyboardTipContainer != null && rootPane.getChildren().contains(keyboardTipContainer)) {
+            Timeline fadeOut = new Timeline(
+                    new KeyFrame(Duration.millis(300),
+                            new KeyValue(keyboardTipContainer.opacityProperty(), 0))
+            );
+            fadeOut.setOnFinished(e -> rootPane.getChildren().remove(keyboardTipContainer));
+            fadeOut.play();
+        }
+    }
+
+    /**
+     * 显示临时提示
+     */
+    private void showTemporaryTip(String message) {
+        Platform.runLater(() -> {
+            Label tip = new Label(message);
+            tip.setStyle("-fx-background-color: rgba(0, 0, 0, 0.75); " +
+                    "-fx-text-fill: white; " +
+                    "-fx-padding: 8px 12px; " +
+                    "-fx-font-size: 13px; " +
+                    "-fx-background-radius: 6px;");
+
+            StackPane tipContainer = new StackPane(tip);
+            tipContainer.setAlignment(Pos.CENTER);
+            tipContainer.setMouseTransparent(true);
+
+            rootPane.getChildren().add(tipContainer);
+
+            // 自动隐藏
+            Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.seconds(1.5), e -> rootPane.getChildren().remove(tipContainer))
+            );
+            timeline.play();
+        });
+    }
+
+    /**
+     * 显示键盘快捷键悬浮提示
+     */
+    private void showKeyboardShortcutsOverlay() {
+        GridPane overlay = new GridPane();
+        overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8); " +
+                "-fx-padding: 20px; " +
+                "-fx-background-radius: 10px;");
+        overlay.setHgap(20);
+        overlay.setVgap(10);
+
+        String[][] shortcuts = {
+                {"空格 / K", "播放/暂停"},
+                {"← / →", "快退/快进 5秒"},
+                {"Shift + ←/→", "快退/快进 30秒"},
+                {"↑ / ↓", "音量 +/- 10%"},
+                {"Ctrl + ←/→", "上一首/下一首"},
+                {"F / F11", "全屏切换"},
+                {"ESC", "退出全屏"},
+                {"M", "静音切换"}
+        };
+
+        int row = 0;
+        for (String[] shortcut : shortcuts) {
+            Label keyLabel = new Label(shortcut[0]);
+            keyLabel.setStyle("-fx-text-fill: #1E90FF; -fx-font-weight: bold;");
+            Label descLabel = new Label(shortcut[1]);
+            descLabel.setStyle("-fx-text-fill: white;");
+
+            overlay.add(keyLabel, 0, row);
+            overlay.add(descLabel, 1, row);
+            row++;
+        }
+
+        StackPane overlayContainer = new StackPane(overlay);
+        overlayContainer.setAlignment(Pos.TOP_CENTER);
+        overlayContainer.setPadding(new Insets(20));
+        overlayContainer.setMouseTransparent(true);
+        overlayContainer.setId("keyboardOverlay");
+
+        rootPane.getChildren().add(overlayContainer);
+
+        // 3秒后自动隐藏
+        Timeline hideOverlay = new Timeline(
+                new KeyFrame(Duration.seconds(3), e -> rootPane.getChildren().remove(overlayContainer))
+        );
+        hideOverlay.play();
+    }
+
+    /**
+     * 隐藏键盘快捷键悬浮提示
+     */
+    private void hideKeyboardShortcutsOverlay() {
+        rootPane.getChildren().removeIf(node ->
+                node instanceof StackPane && "keyboardOverlay".equals(node.getId()));
+    }
+
+    /**
+     * 显示键盘快捷键对话框
+     */
+    private void showKeyboardShortcutsDialog() {
+        Platform.runLater(() -> {
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("键盘快捷键");
+            dialog.setHeaderText("多媒体播放器 - 快捷键说明");
+
+            GridPane grid = new GridPane();
+            grid.setHgap(20);
+            grid.setVgap(10);
+            grid.setPadding(new Insets(20));
+
+            // 分类显示快捷键
+            String[][][] categories = {
+                    {
+                            {"播放控制", ""},
+                            {"空格 / K", "播放/暂停"},
+                            {"ESC", "退出全屏"},
+                            {"Ctrl + ← / →", "上一首/下一首"},
+                    },
+                    {
+                            {"进度控制", ""},
+                            {"← / →", "快退/快进 5秒"},
+                            {"Shift + ← / →", "快退/快进 30秒"},
+                    },
+                    {
+                            {"音量控制", ""},
+                            {"↑ / ↓", "音量 +/- 10%"},
+                            {"Ctrl + ↑ / ↓", "最大/最小音量"},
+                            {"Alt + ↑ / ↓", "音量 +/- 20%"},
+                            {"M", "静音切换"}
+                    },
+                    {
+                            {"界面控制", ""},
+                            {"F / F11", "全屏切换"},
+                            {"F1", "显示帮助"}
+                    },
+                    {
+                            {"功能控制", ""},
+                            {"1-4", "切换倍速 (1.0x, 1.5x, 2.0x, 0.5x)"},
+                    }
+            };
+
+            int col = 0;
+            int maxRows = 0;
+
+            for (String[][] category : categories) {
+                VBox categoryBox = new VBox(5);
+                categoryBox.setPadding(new Insets(0, 15, 0, 0));
+
+                for (String[] item : category) {
+                    HBox rowBox = new HBox(10);
+                    rowBox.setAlignment(Pos.CENTER_LEFT);
+
+                    Label keyLabel = new Label(item[0]);
+                    keyLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #1E90FF; -fx-min-width: 120px;");
+                    Label descLabel = new Label(item[1]);
+                    descLabel.setStyle("-fx-text-fill: #333;");
+
+                    rowBox.getChildren().addAll(keyLabel, descLabel);
+                    categoryBox.getChildren().add(rowBox);
+
+                    if (category.length > maxRows) {
+                        maxRows = category.length;
+                    }
+                }
+
+                grid.add(categoryBox, col, 0);
+                col++;
+            }
+
+            ScrollPane scrollPane = new ScrollPane(grid);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setPrefHeight(300);
+
+            dialog.getDialogPane().setContent(scrollPane);
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+            dialog.getDialogPane().setPrefSize(800, 400);
+
+            dialog.showAndWait();
+        });
     }
 }
