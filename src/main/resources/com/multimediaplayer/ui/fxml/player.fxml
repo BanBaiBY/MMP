@@ -43,6 +43,8 @@
                         style="-fx-font-size: 14.0; -fx-min-width: 80.0; -fx-min-height: 30.0;"/>
                 <Label fx:id="stateLabel" text="就绪"
                        style="-fx-font-size: 14.0; -fx-text-fill: white; -fx-padding: 0.0 10.0 0.0 10.0;"/>
+                <Button fx:id="openBtn" text="打开文件"
+                        style="-fx-font-size: 14.0; -fx-min-width: 80.0; -fx-min-height: 30.0;"/>
             </HBox>
         </VBox>
     </bottom>

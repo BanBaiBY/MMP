@@ -1,6 +1,7 @@
 package com.multimediaplayer.ui;
 
 import com.multimediaplayer.container.AppContext;
+import com.multimediaplayer.core.PlayerCore;
 import com.multimediaplayer.core.api.PlayerController;
 import com.multimediaplayer.subtitle.api.I18nService;
 import com.multimediaplayer.subtitle.api.SubtitleService;
@@ -28,6 +29,7 @@ import java.net.URL;
  */
 public class PlayerUIController implements PlayerUI {
     // FXML组件（与player.fxml中的fx:id对应）
+    @FXML private Button openBtn;
     @FXML private VBox videoContainer;
     @FXML private ProgressBar playProgress;
     @FXML private Button playBtn;
@@ -149,6 +151,8 @@ public class PlayerUIController implements PlayerUI {
             updatePlayState(i18nService.getMessage("state.stopped"));
             playProgress.setProgress(0);
             showSubtitle("");
+            // 清空视频渲染区域
+            videoContainer.getChildren().clear();
         });
 
         // 切换语言按钮
@@ -157,6 +161,50 @@ public class PlayerUIController implements PlayerUI {
             String currentLang = i18nService.getSupportedLanguages().get(0).equals("messages_zh_CN.properties-CN") ? "en-US" : "messages_zh_CN.properties-CN";
             i18nService.setLanguage(currentLang);
             initI18nText(); // 重新初始化控件文本
+        });
+
+        // 打开文件按钮（核心补全逻辑）
+        openBtn.setOnAction(e -> {
+            // 1. 创建文件选择器
+            javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+            // 2. 设置窗口标题
+            fileChooser.setTitle(i18nService.getMessage("btn.open.file"));
+            // 3. 设置文件过滤（仅显示视频格式）
+            fileChooser.getExtensionFilters().addAll(
+                    new javafx.stage.FileChooser.ExtensionFilter("视频文件", "*.mp4", "*.avi", "*.mkv", "*.mov", "*.flv"),
+                    new javafx.stage.FileChooser.ExtensionFilter("所有文件", "*.*")
+            );
+            // 4. 显示文件选择对话框
+            File selectedFile = fileChooser.showOpenDialog(videoContainer.getScene().getWindow());
+            // 5. 处理选择结果
+            if (selectedFile != null) {
+                try {
+                    // 清空原有视频渲染区域
+                    videoContainer.getChildren().clear();
+                    // 调用播放核心播放选中的视频
+                    playerController.play(selectedFile.getAbsolutePath());
+                    // 获取PlayerCore中的MediaPlayer并绑定到UI
+                    PlayerCore playerCore = (PlayerCore) playerController; // 强转获取实现类
+                    MediaPlayer mediaPlayer = playerCore.getMediaPlayer();
+                    if (mediaPlayer != null) {
+                        MediaView mediaView = new MediaView(mediaPlayer);
+                        // 设置视频自适应容器大小
+                        mediaView.fitWidthProperty().bind(videoContainer.widthProperty());
+                        mediaView.fitHeightProperty().bind(videoContainer.heightProperty());
+                        mediaView.setPreserveRatio(true); // 保持宽高比
+                        // 将视频渲染组件添加到容器
+                        videoContainer.getChildren().add(mediaView);
+                    }
+                    // 更新状态文案
+                    updatePlayState(i18nService.getMessage("state.playing"));
+                    logger.info("选择并播放视频文件：{}", selectedFile.getAbsolutePath());
+                } catch (Exception ex) {
+                    logger.error("播放选中的视频失败", ex);
+                    updatePlayState(i18nService.getMessage("state.error"));
+                }
+            } else {
+                logger.info("用户取消了文件选择");
+            }
         });
     }
 
