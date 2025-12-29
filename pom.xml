@@ -91,7 +91,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.multimediaplayer.container.Main</mainClass>
+                            <mainClass>com.multimediaplayer.container.Mains</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

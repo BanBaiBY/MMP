@@ -7,7 +7,7 @@ import javafx.stage.Stage;
 /**
  * 应用入口：负责启动JavaFX、装配模块、展示UI
  */
-public class Main extends Application {
+public class Mains extends Application {
     private ModuleAssembler moduleAssembler;
 
     @Override
